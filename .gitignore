@@ -9,15 +9,6 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
 # Metro
 .metro-health-check*
 
@@ -30,12 +21,36 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files — use .env.example as template
+.env
 .env*.local
+
+# IDE
+.idea/
+*.orig.*
+
+# test coverage output
+coverage/
+
+# native secrets and signing
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
 # typescript
 *.tsbuildinfo
 
-# generated native folders
+# Android: machine-specific and build outputs
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/.cxx/
+android/app/.cxx/
+android/.kotlin/
+android/app/.kotlin/
+
+# iOS (not used in this project)
 /ios
-/android

@@ -1,0 +1,25 @@
+appId: com.yuuga.circletactics
+---
+- launchApp:
+    clearState: true
+
+# タイトル画面からオンラインロビーへ
+- assertVisible:
+    id: "title-screen"
+
+- tapOn:
+    id: "play-online-btn"
+
+# ロビー画面
+- assertVisible:
+    id: "lobby-screen"
+    timeout: 3000
+
+# ルーム作成
+- tapOn:
+    id: "create-room-btn"
+
+# ホスト画面（ルームコード表示まで待つ）
+- assertVisible:
+    id: "room-code-text"
+    timeout: 10000

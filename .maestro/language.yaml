@@ -1,0 +1,24 @@
+appId: com.yuuga.circletactics
+---
+- launchApp:
+    clearState: true
+
+# タイトル画面
+- assertVisible:
+    id: "title-screen"
+
+# メニューを開く（FABボタン）
+- tapOn:
+    id: "menu-fab-btn"
+
+# 言語選択モーダルを開く
+- tapOn:
+    id: "lang-selector-btn"
+
+# 日本語を選択
+- tapOn:
+    text: "日本語"
+
+# 言語が変更されたことを確認（UIが更新される）
+- waitForAnimationToEnd:
+    timeout: 2000

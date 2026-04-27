@@ -1,0 +1,29 @@
+appId: com.yuuga.circletactics
+---
+- launchApp:
+    clearState: true
+
+# タイトル画面が表示されるまで待つ
+- assertVisible:
+    id: "title-screen"
+
+# BLUEをhuman に切り替え（2人対戦）
+- tapOn:
+    id: "seat-toggle-BLUE"
+
+# Play Local をタップ
+- tapOn:
+    id: "play-local-btn"
+
+# ゲームボードが表示されるまで待つ
+- assertVisible:
+    id: "game-board"
+    timeout: 5000
+
+# ルーレット + アナウンスが終わるまで待つ（最大5秒）
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ターンテキストが表示されている
+- assertVisible:
+    id: "turn-text"
