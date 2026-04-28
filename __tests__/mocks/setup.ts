@@ -32,11 +32,86 @@ jest.mock('expo-router', () => ({
   },
 }));
 
-// react-native-reanimated mock
+// react-native-reanimated mock (inline to avoid Worklets native initialization)
 jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
+  const { View, Text, Animated } = require('react-native');
+  const NOOP = () => {};
+  const NOOP_FACTORY = () => NOOP;
+  const ID = (t: unknown) => t;
+  const useSharedValue = (init: unknown) => ({ value: init, addListener: NOOP, removeListener: NOOP, modify: NOOP });
+  const useAnimatedStyle = (fn: () => unknown) => { try { return fn(); } catch { return {}; } };
+  const withTiming = ID;
+  const withSpring = ID;
+  const withRepeat = ID;
+  const withSequence = (...args: unknown[]) => args[args.length - 1];
+  const withDelay = (_delay: unknown, anim: unknown) => anim;
+  const cancelAnimation = NOOP;
+  const interpolate = (_v: unknown, _i: unknown[], o: unknown[]) => o[0];
+  const interpolateColor = (_v: unknown, _i: unknown[], o: unknown[]) => o[0];
+  const useAnimatedRef = () => ({ current: null });
+  const useAnimatedScrollHandler = NOOP_FACTORY;
+  const useAnimatedGestureHandler = NOOP_FACTORY;
+  const useAnimatedReaction = NOOP;
+  const runOnJS = (fn: (...args: unknown[]) => void) => fn;
+  const runOnUI = (fn: (...args: unknown[]) => void) => fn;
+  const Easing = { inOut: ID, out: ID, in: ID, linear: ID, ease: 0, quad: 0, cubic: 0, bezier: NOOP_FACTORY, circle: 0, exp: 0, elastic: NOOP_FACTORY, bounce: 0, back: NOOP_FACTORY, steps: NOOP_FACTORY };
+  const FadeIn = { duration: NOOP_FACTORY };
+  const FadeOut = { duration: NOOP_FACTORY };
+
+  // Build an animated View that just forwards to RN View
+  const AnimatedView = View;
+  const AnimatedText = Text;
+  const AnimatedImage = require('react-native').Image;
+  const AnimatedScrollView = require('react-native').ScrollView;
+
+  return {
+    __esModule: true,
+    default: {
+      View: AnimatedView,
+      Text: AnimatedText,
+      Image: AnimatedImage,
+      ScrollView: AnimatedScrollView,
+      createAnimatedComponent: (C: unknown) => C,
+    },
+    Animated: {
+      View: AnimatedView,
+      Text: AnimatedText,
+      Image: AnimatedImage,
+      ScrollView: AnimatedScrollView,
+      createAnimatedComponent: (C: unknown) => C,
+    },
+    useSharedValue,
+    useAnimatedStyle,
+    useAnimatedRef,
+    useAnimatedScrollHandler,
+    useAnimatedGestureHandler,
+    useAnimatedReaction,
+    withTiming,
+    withSpring,
+    withRepeat,
+    withSequence,
+    withDelay,
+    cancelAnimation,
+    interpolate,
+    interpolateColor,
+    runOnJS,
+    runOnUI,
+    Easing,
+    FadeIn,
+    FadeOut,
+    FadeInDown: FadeIn,
+    FadeOutUp: FadeOut,
+    SlideInDown: FadeIn,
+    SlideOutDown: FadeOut,
+    ZoomIn: FadeIn,
+    ZoomOut: FadeOut,
+    createAnimatedComponent: (C: unknown) => C,
+    // Animated namespace for RN compat
+    View: AnimatedView,
+    Text: AnimatedText,
+    Image: AnimatedImage,
+    ScrollView: AnimatedScrollView,
+  };
 });
 
 // react-native-gesture-handler mock

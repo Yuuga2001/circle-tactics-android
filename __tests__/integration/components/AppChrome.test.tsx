@@ -1,0 +1,103 @@
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import AppChrome from '../../../src/components/AppChrome';
+
+const mockReplace = jest.fn();
+
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn().mockReturnValue({
+    push: jest.fn(),
+    replace: mockReplace,
+    back: jest.fn(),
+  }),
+  useSegments: jest.fn().mockReturnValue([]),
+}));
+
+jest.mock('../../../src/online/api', () => ({
+  api: {
+    leave: jest.fn().mockResolvedValue({}),
+  },
+}));
+
+jest.mock('../../../src/online/activeGame', () => ({
+  clearActiveGame: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../../../src/online/clientId', () => ({
+  getClientId: jest.fn().mockResolvedValue('client-123'),
+}));
+
+jest.mock('../../../src/i18n/index', () => ({
+  useLang: () => ({
+    lang: 'en',
+    setLang: jest.fn(),
+    t: {
+      bgmLabel: 'BGM',
+      seLabel: 'SE',
+      soundOn: 'ON',
+      soundOff: 'OFF',
+    },
+  }),
+  LANGUAGES: {
+    en: 'English',
+    ja: '日本語',
+  },
+  LangProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock('../../../src/audio/audioManager', () => ({
+  audioManager: {
+    play: jest.fn(),
+    startBGM: jest.fn(),
+    stopBGM: jest.fn(),
+    getBgmMuted: jest.fn().mockReturnValue(false),
+    getSeMuted: jest.fn().mockReturnValue(false),
+    setBgmMuted: jest.fn(),
+    setSeMuted: jest.fn(),
+  },
+}));
+
+describe('AppChrome', () => {
+  const { useSegments } = require('expo-router');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useSegments.mockReturnValue([]);
+  });
+
+  it('LanguageSelector のトリガーが表示される', () => {
+    const { getByText } = render(<AppChrome />);
+    expect(getByText('Language')).toBeTruthy();
+  });
+
+  it('segments が空（タイトル画面）のとき MenuButton は非表示', () => {
+    useSegments.mockReturnValue([]);
+    const { queryByTestId } = render(<AppChrome />);
+    // mode=title のとき MenuButton は null を返す
+    expect(queryByTestId('menu-fab-btn')).toBeNull();
+  });
+
+  it('segments が ["local"] のとき MenuButton が表示される', () => {
+    useSegments.mockReturnValue(['local']);
+    const { getByTestId } = render(<AppChrome />);
+    expect(getByTestId('menu-fab-btn')).toBeTruthy();
+  });
+
+  it('segments が ["online", "playing"] のとき MenuButton が表示される', () => {
+    useSegments.mockReturnValue(['online', 'playing']);
+    const { getByTestId } = render(<AppChrome />);
+    expect(getByTestId('menu-fab-btn')).toBeTruthy();
+  });
+
+  it('segments が ["settings"] のとき mode=other で MenuButton が表示される', () => {
+    useSegments.mockReturnValue(['settings']);
+    const { getByTestId } = render(<AppChrome />);
+    expect(getByTestId('menu-fab-btn')).toBeTruthy();
+  });
+
+  it('segments が ["index"] のとき MenuButton は非表示', () => {
+    useSegments.mockReturnValue(['index']);
+    const { queryByTestId } = render(<AppChrome />);
+    expect(queryByTestId('menu-fab-btn')).toBeNull();
+  });
+});

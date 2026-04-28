@@ -1,17 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { GameSession } from '../online/types';
 import { usePolling } from '../online/usePolling';
 import { useLang } from '../i18n';
 import BoardComponent from './Board';
 import HandsSummary from './HandsSummary';
-import { COLORS, FONT_SIZE, SPACING } from '../styles/theme';
+import ScreenContainer from './ui/ScreenContainer';
+import Button from './ui/Button';
+import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS } from '../styles/theme';
 
 interface SpectatorViewProps {
   gameId: string;
@@ -52,153 +48,152 @@ const SpectatorView: React.FC<SpectatorViewProps> = ({
   const humanPlayers = players.filter((p) => p.isHuman).map((p) => p.color);
 
   return (
-    <View testID="spectator-view" style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.titleGroup}>
-          <Text style={styles.title}>CircleTactics</Text>
-          {session?.roomCode ? (
-            <Text style={styles.roomCode}>#{session.roomCode}</Text>
-          ) : null}
-        </View>
-        <TouchableOpacity style={styles.leaveButton} onPress={onLeave} activeOpacity={0.8}>
-          <Text style={styles.leaveButtonText}>{t.leave}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.queueBanner}>
-        {queuePosition !== null ? (
-          <View style={styles.queueContent}>
-            <Text style={styles.queueTitle}>{t.waitingToJoin}</Text>
-            <Text style={styles.queueSub}>
-              {t.queuePos(queuePosition)}
-              {queuePosition === 1 ? ` — ${t.youreNext}` : ''}
-            </Text>
+    <ScreenContainer>
+      <ScrollView testID="spectator-view" contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.titleGroup}>
+            <Text style={styles.title}>CircleTactics</Text>
+            {!!session?.roomCode && <Text style={styles.roomCode}>#{session.roomCode}</Text>}
           </View>
-        ) : (
-          <Text style={styles.queueTitle}>{t.joiningLabel}</Text>
-        )}
-      </View>
+          <Button title={t.leave} variant="header" size="sm" onPress={onLeave} />
+        </View>
 
-      {session ? (
-        <>
-          <HandsSummary
-            hands={session.hands}
-            players={session.turnOrder}
-            currentPlayer={session.currentPlayer}
-          />
+        <View style={styles.queueBanner}>
+          {queuePosition !== null ? (
+            <>
+              <Text style={styles.queueTitle}>⏳ {t.waitingToJoin}</Text>
+              <Text style={styles.queueSub}>
+                {t.queuePos(queuePosition)}
+                {queuePosition === 1 ? ` — ${t.youreNext}` : ''}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.queueTitle}>{t.joiningLabel}</Text>
+          )}
+        </View>
 
-          <View style={styles.boardArea}>
-            <BoardComponent
-              board={session.board}
-              onCellClick={() => {}}
-              winningCells={session.winInfo?.cells}
-              validCells={[]}
+        {session ? (
+          <>
+            <HandsSummary
+              hands={session.hands}
+              players={session.turnOrder}
+              humanPlayers={humanPlayers}
+              currentPlayer={session.currentPlayer}
+              myColor={null}
             />
-          </View>
 
-          <View style={styles.statusBar}>
-            {session.winner ? (
-              <Text style={styles.statusText}>
-                {t.playerWins(`${t.playerLabel} ${session.winner}`)}
-              </Text>
-            ) : (
-              <Text style={styles.statusText}>
-                {players.find((p) => p.color === session.currentPlayer)?.isHuman
-                  ? t.turnPlayer(session.currentPlayer)
-                  : t.aiThinking(session.currentPlayer)}
-              </Text>
-            )}
+            <View style={styles.boardArea}>
+              <BoardComponent
+                board={session.board}
+                onCellClick={() => {}}
+                winningCells={session.winInfo?.cells}
+                winningPlayer={session.winInfo?.player ?? null}
+              />
+            </View>
+
+            <View style={styles.statusBar}>
+              {session.winner ? (
+                <Text style={styles.statusText}>
+                  {t.playerWins(`${t.playerLabel} ${session.winner}`)}
+                </Text>
+              ) : (
+                <Text style={styles.statusText}>
+                  {players.find((p) => p.color === session.currentPlayer)?.isHuman
+                    ? t.turnPlayer(session.currentPlayer)
+                    : t.aiThinking(session.currentPlayer)}
+                </Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <View style={styles.loading}>
+            <ActivityIndicator color={COLORS.boardFrame} />
+            <Text style={styles.loadingText}>{t.loading}</Text>
           </View>
-        </>
-      ) : (
-        <View style={styles.loading}>
-          <ActivityIndicator color={COLORS.text} />
-          <Text style={styles.loadingText}>{t.loading}</Text>
-        </View>
-      )}
-    </View>
+        )}
+      </ScrollView>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SPACING.md,
-    gap: SPACING.md,
+  scrollContent: {
+    flexGrow: 1,
+    padding: 8,
+    gap: 8,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 4,
   },
   titleGroup: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    alignItems: 'baseline',
+    gap: 8,
   },
   title: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xl,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.titleSm,
+    color: COLORS.boardFrame,
+    letterSpacing: 1,
   },
   roomCode: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.md,
-  },
-  leaveButton: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 6,
-  },
-  leaveButtonText: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 12,
+    color: COLORS.boardFrame,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   queueBanner: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.section,
+    borderWidth: 2,
+    borderColor: COLORS.boardFrame,
     alignItems: 'center',
-  },
-  queueContent: {
-    alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
+    ...SHADOWS.subtle,
   },
   queueTitle: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.lg,
+    color: COLORS.boardFrame,
   },
   queueSub: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.body,
     color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
   },
   boardArea: {
-    alignItems: 'center',
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
   },
   statusBar: {
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    paddingVertical: 8,
   },
   statusText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.lg,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.status,
+    color: COLORS.boardFrame,
   },
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.md,
+    gap: 12,
   },
   loadingText: {
+    fontFamily: FONT_FAMILY.regular,
     color: COLORS.textMuted,
-    fontSize: FONT_SIZE.md,
+    fontSize: FONT_SIZE.body,
   },
 });
 

@@ -9,7 +9,7 @@ describe('Cell', () => {
   it('空のセルが表示される', () => {
     const onPress = jest.fn();
     const { getByTestId } = render(
-      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} />
+      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} cellSize={72} />
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
@@ -17,7 +17,7 @@ describe('Cell', () => {
   it('testIDがcell-{row}-{col}形式である', () => {
     const onPress = jest.fn();
     const { getByTestId } = render(
-      <Cell row={2} col={3} cell={emptyCell} onPress={onPress} />
+      <Cell row={2} col={3} cell={emptyCell} onPress={onPress} cellSize={72} />
     );
     expect(getByTestId('cell-2-3')).toBeTruthy();
   });
@@ -25,7 +25,7 @@ describe('Cell', () => {
   it('押すとonPressが呼び出される', () => {
     const onPress = jest.fn();
     const { getByTestId } = render(
-      <Cell row={1} col={1} cell={emptyCell} onPress={onPress} />
+      <Cell row={1} col={1} cell={emptyCell} onPress={onPress} cellSize={72} />
     );
     fireEvent.press(getByTestId('cell-1-1'));
     expect(onPress).toHaveBeenCalledTimes(1);
@@ -35,7 +35,7 @@ describe('Cell', () => {
     const onPress = jest.fn();
     const cellWithPiece: CellState = [{ player: 'RED', size: 'SMALL' }, null, null];
     const { getByTestId } = render(
-      <Cell row={0} col={0} cell={cellWithPiece} onPress={onPress} />
+      <Cell row={0} col={0} cell={cellWithPiece} onPress={onPress} cellSize={72} />
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
@@ -43,7 +43,7 @@ describe('Cell', () => {
   it('isWinning=trueのときセルが表示される', () => {
     const onPress = jest.fn();
     const { getByTestId } = render(
-      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} isWinning={true} />
+      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} cellSize={72} isWinning={true} />
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
@@ -51,7 +51,7 @@ describe('Cell', () => {
   it('isValid=trueのときセルが表示される', () => {
     const onPress = jest.fn();
     const { getByTestId } = render(
-      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} isValid={true} />
+      <Cell row={0} col={0} cell={emptyCell} onPress={onPress} cellSize={72} isValid={true} />
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
@@ -72,7 +72,7 @@ describe('Cell', () => {
       { player: 'GREEN', size: 'LARGE' },
     ];
     const { getByTestId } = render(
-      <Cell row={3} col={3} cell={cellFull} onPress={onPress} />
+      <Cell row={3} col={3} cell={cellFull} onPress={onPress} cellSize={72} />
     );
     expect(getByTestId('cell-3-3')).toBeTruthy();
   });

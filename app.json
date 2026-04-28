@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#f3e9d8"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#f3e9d8"
       },
       "package": "jp.riverapp.circletactics",
       "edgeToEdgeEnabled": true,
@@ -44,6 +44,15 @@
     "plugins": [
       "expo-router",
       "expo-localization",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/MPLUSRounded1c-Regular.ttf",
+            "./assets/fonts/MPLUSRounded1c-Bold.ttf"
+          ]
+        }
+      ],
       [
         "expo-camera",
         {

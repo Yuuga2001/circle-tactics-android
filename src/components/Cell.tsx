@@ -1,95 +1,182 @@
-import React from 'react';
-import { TouchableOpacity, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { CellState } from '../types';
-import { CELL_SIZE, COLORS } from '../styles/theme';
+import React, { useEffect } from 'react';
+import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  cancelAnimation,
+  Easing,
+  interpolateColor,
+} from 'react-native-reanimated';
+import { CellState, Player, SIZES } from '../types';
+import { COLORS, RADIUS, PLAYER_BORDER_COLORS } from '../styles/theme';
 import Piece from './Piece';
 
 interface CellProps {
   row: number;
   col: number;
   cell: CellState;
+  cellSize: number;
   onPress: () => void;
   isWinning?: boolean;
+  winningPlayer?: Player | null;
   isValid?: boolean;
-  cellSize?: number;
+  isDragOver?: boolean;
 }
 
 const Cell: React.FC<CellProps> = ({
   row,
   col,
   cell,
+  cellSize,
   onPress,
-  isWinning = false,
-  isValid = false,
-  cellSize = CELL_SIZE,
+  isWinning,
+  winningPlayer,
+  isValid,
+  isDragOver,
 }) => {
-  const getBorderColor = () => {
-    if (isWinning) return '#f1c40f';
-    if (isValid) return '#2ecc71';
-    return COLORS.border;
-  };
+  const validPulse = useSharedValue(0);
+  const winPulse = useSharedValue(0);
+  const pressed = useSharedValue(0);
 
-  const getBackgroundColor = () => {
-    if (isWinning) return 'rgba(241,196,15,0.15)';
-    if (isValid) return 'rgba(46,204,113,0.1)';
-    return COLORS.surface;
-  };
+  // valid-pulse: 1.4s ease-in-out infinite alternate (Web の inset shadow を境界線で擬似再現)
+  useEffect(() => {
+    if (isValid && !isWinning) {
+      validPulse.value = withRepeat(
+        withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
+        -1,
+        true,
+      );
+    } else {
+      cancelAnimation(validPulse);
+      validPulse.value = withTiming(0, { duration: 200 });
+    }
+  }, [isValid, isWinning, validPulse]);
 
-  const containerStyle: ViewStyle = {
-    width: cellSize,
-    height: cellSize,
-    borderWidth: 1.5,
-    borderColor: getBorderColor(),
-    backgroundColor: getBackgroundColor(),
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+  // win-pulse: 1.1s ease-in-out infinite (gold glow)
+  useEffect(() => {
+    if (isWinning) {
+      winPulse.value = withRepeat(
+        withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.quad) }),
+        -1,
+        true,
+      );
+    } else {
+      cancelAnimation(winPulse);
+      winPulse.value = withTiming(0, { duration: 200 });
+    }
+  }, [isWinning, winPulse]);
+
+  const animatedContainer = useAnimatedStyle(() => {
+    const winBg = interpolateColor(
+      winPulse.value,
+      [0, 1],
+      ['rgba(255,248,196,0.7)', 'rgba(255,248,196,1)'],
+    );
+    return {
+      transform: [{ scale: 1 - pressed.value * 0.06 }],
+      backgroundColor: isWinning ? winBg : isDragOver ? 'rgba(255,193,7,0.32)' : COLORS.cell,
+      borderColor: isWinning ? '#ffd54f' : COLORS.boardFrame,
+    };
+  });
+
+  const animatedGlow = useAnimatedStyle(() => ({
+    opacity: isWinning ? winPulse.value : 0,
+  }));
+
+  const animatedValidRing = useAnimatedStyle(() => ({
+    opacity: isValid && !isWinning ? 0.5 + validPulse.value * 0.5 : 0,
+  }));
+
+  const dragOverStyle: ViewStyle | null = isDragOver
+    ? { borderWidth: 3, borderColor: COLORS.highlight, transform: [{ scale: 0.97 }] }
+    : null;
 
   return (
-    <TouchableOpacity
+    <Pressable
       testID={`cell-${row}-${col}`}
       onPress={onPress}
-      style={containerStyle}
-      activeOpacity={0.7}
+      onPressIn={() => {
+        pressed.value = withTiming(1, { duration: 80 });
+      }}
+      onPressOut={() => {
+        pressed.value = withTiming(0, { duration: 120 });
+      }}
+      style={[styles.pressable, { width: cellSize, height: cellSize }]}
     >
-      <View style={styles.pieceContainer} pointerEvents="none">
-        {/* Render pieces from largest to smallest so smaller pieces appear on top */}
-        {cell[2] && (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <View style={styles.centered}>
-              <Piece player={cell[2].player} size="LARGE" testID={`piece-${row}-${col}-large`} />
-            </View>
-          </View>
-        )}
-        {cell[1] && (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <View style={styles.centered}>
-              <Piece player={cell[1].player} size="MEDIUM" testID={`piece-${row}-${col}-medium`} />
-            </View>
-          </View>
-        )}
-        {cell[0] && (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <View style={styles.centered}>
-              <Piece player={cell[0].player} size="SMALL" testID={`piece-${row}-${col}-small`} />
-            </View>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.cellBase,
+          { width: cellSize, height: cellSize },
+          animatedContainer,
+          dragOverStyle,
+        ]}
+      >
+        {/* 勝利時のゴールドグロー（複数オーバーレイで疑似 box-shadow） */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            styles.winGlow,
+            animatedGlow,
+          ]}
+        />
+        {/* 有効セルの白パルス枠 */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            styles.validRing,
+            animatedValidRing,
+          ]}
+        />
+        {/* ピース描画: LARGE→MEDIUM→SMALL の順で z-index を効かせる */}
+        {/* overflow:'visible' は Android でコンテナ外へのはみ出し描画を許可するために必須 */}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { overflow: 'visible' }]}>
+          {SIZES.map((size, idx) => {
+            const piece = cell[idx];
+            if (!piece) return null;
+            return (
+              <Piece
+                key={size}
+                player={piece.player}
+                size={size}
+                cellSize={cellSize - 4}
+                testID={`piece-${row}-${col}-${size.toLowerCase()}`}
+              />
+            );
+          })}
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  pieceContainer: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
+  pressable: {
+    position: 'relative',
   },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  cellBase: {
+    borderRadius: RADIUS.cell,
+    borderWidth: 2,
+    overflow: 'visible',
+  },
+  winGlow: {
+    borderRadius: RADIUS.cell,
+    borderWidth: 3,
+    borderColor: '#fff8b0',
+    shadowColor: '#ffe66e',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.95,
+    shadowRadius: 26,
+    elevation: 18,
+  },
+  validRing: {
+    borderRadius: RADIUS.cell,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,1)',
   },
 });
 

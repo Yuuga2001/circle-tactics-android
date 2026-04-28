@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { PieceSize, Player, HandState } from '../types';
 
 interface CellLayout {
@@ -16,83 +16,55 @@ interface Options {
   enabled: boolean;
   onSelectSize: (size: PieceSize) => void;
   onPlace: (row: number, col: number) => void;
-  cellLayouts: CellLayout[];
+  cellLayouts?: CellLayout[];
 }
 
 export interface BoardDragApi {
   draggingSize: PieceSize | null;
   hoverCell: { row: number; col: number } | null;
-  ghost: null; // Ghost is rendered inline in Board component
+  /** Returned to PlayerHand to attach long-press / pointer handlers. */
+  bindPiecePointerDown: (size: PieceSize) => Record<string, unknown>;
+  /** Legacy alias kept for tests. */
   bindLongPress: (size: PieceSize) => Record<string, unknown>;
+  ghost: null;
 }
 
-function findCellAt(
-  x: number,
-  y: number,
-  layouts: CellLayout[],
-): { row: number; col: number } | null {
-  for (const layout of layouts) {
-    if (
-      x >= layout.x &&
-      x <= layout.x + layout.width &&
-      y >= layout.y &&
-      y <= layout.y + layout.height
-    ) {
-      return { row: layout.row, col: layout.col };
-    }
-  }
-  return null;
-}
-
-export function useBoardDrag({
-  hand,
-  enabled,
-  onSelectSize,
-  onPlace,
-  cellLayouts,
-}: Options): BoardDragApi {
+/**
+ * Drag-to-place support for the bottom hand.
+ *
+ * This is a simplified RN port of the Web `useBoardDrag` hook. On Android we
+ * primarily rely on tap-to-select + tap-to-place, but we still expose the same
+ * interface (`bindPiecePointerDown`, `draggingSize`, `hoverCell`) so call sites
+ * stay aligned with the Web app.
+ */
+export function useBoardDrag({ enabled, hand, onSelectSize }: Options): BoardDragApi {
   const [draggingSize, setDraggingSize] = useState<PieceSize | null>(null);
-  const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);
+  const [hoverCell] = useState<{ row: number; col: number } | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
-      setDraggingSize(null);
-      setHoverCell(null);
-    }
+    if (!enabled) setDraggingSize(null);
   }, [enabled]);
 
-  const bindLongPress = useCallback(
+  const bind = useCallback(
     (size: PieceSize) => {
       if (!enabled || hand[size] <= 0) return {};
-
       return {
         onLongPress: () => {
           onSelectSize(size);
           setDraggingSize(size);
+          // Drag is purely visual feedback; tap on cell still places.
+          setTimeout(() => setDraggingSize(null), 250);
         },
-        onResponderMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-          if (!draggingSize) return;
-          const cell = findCellAt(e.nativeEvent.pageX, e.nativeEvent.pageY, cellLayouts);
-          setHoverCell(cell);
-        },
-        onResponderRelease: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-          if (!draggingSize) return;
-          const cell = findCellAt(e.nativeEvent.pageX, e.nativeEvent.pageY, cellLayouts);
-          if (cell) onPlace(cell.row, cell.col);
-          setDraggingSize(null);
-          setHoverCell(null);
-        },
-        onStartShouldSetResponder: () => true,
-        onMoveShouldSetResponder: () => true,
-      };
+      } as Record<string, unknown>;
     },
-    [enabled, hand, draggingSize, onSelectSize, onPlace, cellLayouts],
+    [enabled, hand, onSelectSize],
   );
 
   return {
     draggingSize,
     hoverCell,
+    bindPiecePointerDown: bind,
+    bindLongPress: bind,
     ghost: null,
-    bindLongPress,
   };
 }

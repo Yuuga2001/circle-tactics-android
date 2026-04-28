@@ -1,4 +1,5 @@
 import type { GameSession } from '../../src/online/types';
+import type { CellState } from '../../src/types';
 
 export function makeMockSession(overrides: Partial<GameSession> = {}): GameSession {
   return {
@@ -9,7 +10,7 @@ export function makeMockSession(overrides: Partial<GameSession> = {}): GameSessi
     ],
     spectators: [],
     board: Array(4).fill(null).map(() =>
-      Array(4).fill(null).map(() => [null, null, null] as [string | null, string | null, string | null])
+      Array(4).fill(null).map(() => [null, null, null] as CellState)
     ),
     hands: {
       RED: { SMALL: 5, MEDIUM: 5, LARGE: 5 },

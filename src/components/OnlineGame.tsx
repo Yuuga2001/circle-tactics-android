@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PieceSize, Player, SIZES } from '../types';
 import { api, friendlyError } from '../online/api';
 import { GameSession } from '../online/types';
@@ -18,8 +12,19 @@ import BoardComponent from './Board';
 import PlayerHand from './PlayerHand';
 import HandsSummary from './HandsSummary';
 import Toast from './Toast';
+import AnnounceOverlay from './AnnounceOverlay';
+import Confetti from './Confetti';
+import ConfirmDialog from './ConfirmDialog';
+import ScreenContainer from './ui/ScreenContainer';
+import Button from './ui/Button';
 import { useBoardDrag } from './useBoardDrag';
-import { COLORS, FONT_SIZE, SPACING, PLAYER_COLORS } from '../styles/theme';
+import {
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  PLAYER_BORDER_COLORS,
+  PlayerKey,
+} from '../styles/theme';
 
 export interface OnlineGameProps {
   gameId: string;
@@ -36,13 +41,7 @@ type Phase = 'rouletting' | 'announcing' | 'playing';
 
 function shouldSkipRoulette(s: GameSession): boolean {
   if (s.winner) return true;
-  for (const row of s.board) {
-    for (const cell of row) {
-      for (const slot of cell) {
-        if (slot !== null) return true;
-      }
-    }
-  }
+  for (const row of s.board) for (const cell of row) for (const slot of cell) if (slot !== null) return true;
   if (s.startedAt) {
     const elapsed = Date.now() - new Date(s.startedAt).getTime();
     if (elapsed > AI_INITIAL_DELAY_MS) return true;
@@ -50,13 +49,7 @@ function shouldSkipRoulette(s: GameSession): boolean {
   return false;
 }
 
-const OnlineGame: React.FC<OnlineGameProps> = ({
-  gameId,
-  clientId,
-  initialSession,
-  onLeave,
-  onDemoted,
-}) => {
+const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSession, onLeave, onDemoted }) => {
   const { t } = useLang();
   const { play } = useGameSounds();
   const { session, setSession } = usePolling(gameId);
@@ -74,18 +67,15 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     onDemoted(session);
   }, [session, clientId, onDemoted]);
 
-  // Identity & turn helpers
   const me = current.players.find((p) => p.clientId === clientId);
   const myColor = me?.color ?? null;
   const isMyTurn = !!myColor && current.currentPlayer === myColor && !current.winner;
 
-  // Opening roulette
+  // Roulette
   const [phase, setPhase] = useState<Phase>(() =>
     shouldSkipRoulette(initialSession) ? 'playing' : 'rouletting',
   );
-  const [rouletteHighlight, setRouletteHighlight] = useState<Player>(
-    current.turnOrder[0],
-  );
+  const [rouletteHighlight, setRouletteHighlight] = useState<Player>(current.turnOrder[0]);
   const turnOrderRef = useRef<Player[]>(current.turnOrder);
 
   useEffect(() => {
@@ -105,7 +95,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     }
     timeouts.push(setTimeout(() => setPhase('announcing'), cumulative + 80));
     return () => timeouts.forEach(clearTimeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   useEffect(() => {
@@ -114,20 +104,21 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // Actions
+  // Optimistic UI for select-size
   const [optimisticSelectedSize, setOptimisticSelectedSize] = useState<PieceSize | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const confirm = (message: string, onConfirm: () => void) => {
-    if (current.status === 'FINISHED') { onConfirm(); return; }
+    if (current.status === 'FINISHED') {
+      onConfirm();
+      return;
+    }
     setConfirmDialog({ message, onConfirm });
   };
 
   useEffect(() => {
-    if (current.selectedSize === optimisticSelectedSize) {
-      setOptimisticSelectedSize(null);
-    }
+    if (current.selectedSize === optimisticSelectedSize) setOptimisticSelectedSize(null);
   }, [current.selectedSize, optimisticSelectedSize]);
 
   const handleSelectSize = async (size: PieceSize) => {
@@ -186,7 +177,6 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     });
   };
 
-  // Keep active game pointer fresh
   useEffect(() => {
     saveActiveGame({ gameId, roomCode: current.roomCode, color: myColor ?? undefined });
   }, [gameId, current.roomCode, myColor]);
@@ -195,7 +185,6 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     if (current.status === 'FINISHED') clearActiveGame();
   }, [current.status]);
 
-  // Derived
   const selectedSize = optimisticSelectedSize ?? current.selectedSize;
   const summaryHighlight = phase === 'playing' ? current.currentPlayer : rouletteHighlight;
   const humanPlayers = useMemo(
@@ -217,7 +206,6 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     return cells;
   }, [isMyTurn, phase, current.winner, current.board, current.hands, current.currentPlayer, selectedSize]);
 
-  // Timer for takeover countdown
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (current.status !== 'PLAYING' || current.winner) return;
@@ -226,28 +214,23 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
   }, [current.status, current.winner]);
 
   const currentPlayerEntry = current.players.find((p) => p.color === current.currentPlayer);
-  const elapsedSinceActivity =
-    currentPlayerEntry?.isHuman
-      ? now - new Date(currentPlayerEntry.lastActiveAt).getTime()
-      : 0;
+  const elapsedSinceActivity = currentPlayerEntry?.isHuman
+    ? now - new Date(currentPlayerEntry.lastActiveAt).getTime()
+    : 0;
   const takeoverSecondsLeft =
     currentPlayerEntry?.isHuman && elapsedSinceActivity > AI_TAKEOVER_MS / 2
       ? Math.max(0, Math.ceil((AI_TAKEOVER_MS - elapsedSinceActivity) / 1000))
       : null;
 
-  // Sound effects
+  // Sounds
   const prevRouletteRef = useRef(rouletteHighlight);
   useEffect(() => {
-    if (phase === 'rouletting' && rouletteHighlight !== prevRouletteRef.current) {
-      play('roulette');
-    }
+    if (phase === 'rouletting' && rouletteHighlight !== prevRouletteRef.current) play('roulette');
     prevRouletteRef.current = rouletteHighlight;
   }, [rouletteHighlight, phase, play]);
-
   useEffect(() => {
     if (phase === 'announcing') play('first');
   }, [phase, play]);
-
   const prevWinnerRef = useRef<typeof current.winner>(null);
   useEffect(() => {
     if (current.winner && current.winner !== prevWinnerRef.current) {
@@ -255,7 +238,6 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     }
     prevWinnerRef.current = current.winner;
   }, [current.winner, play]);
-
   const pieceCount = useMemo(
     () => current.board.flat().flat().filter((p) => p !== null).length,
     [current.board],
@@ -270,7 +252,9 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
     humanPlayers.includes(p) ? `${t.playerLabel} ${p}` : `${p} (${t.aiLabel})`;
 
   const turnText = current.winner
-    ? t.playerWins(playerLabel(current.winner))
+    ? (current.winner as string) === 'DRAW'
+      ? t.draw
+      : t.playerWins(playerLabel(current.winner))
     : phase === 'rouletting'
       ? t.pickingFirst
       : phase === 'announcing'
@@ -281,287 +265,212 @@ const OnlineGame: React.FC<OnlineGameProps> = ({
             ? t.turnYou
             : t.turnPlayer(current.currentPlayer);
 
-  return (
-    <View testID="online-game-board" style={styles.container}>
-      <HandsSummary
-        hands={current.hands}
-        players={current.turnOrder}
-        currentPlayer={summaryHighlight}
-      />
+  const victoryOverlay: PlayerKey | null =
+    current.winner && (current.winner as string) !== 'DRAW' ? (current.winner as PlayerKey) : null;
 
-      <View style={styles.boardArea}>
-        <BoardComponent
-          board={current.board}
-          onCellClick={handleCellClick}
-          winningCells={current.winInfo?.cells}
-          validCells={validCells}
+  return (
+    <ScreenContainer victoryOverlay={victoryOverlay}>
+      {current.winner && (current.winner as string) !== 'DRAW' && <Confetti />}
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>CircleTactics</Text>
+          {!!current.roomCode && <Text style={styles.roomCode}>#{current.roomCode}</Text>}
+        </View>
+
+        <HandsSummary
+          hands={current.hands}
+          players={current.turnOrder}
+          humanPlayers={humanPlayers}
+          currentPlayer={summaryHighlight}
+          myColor={myColor}
         />
 
-        {phase === 'announcing' && (
-          <View style={[styles.overlay, { backgroundColor: PLAYER_COLORS[current.currentPlayer] + 'cc' }]}>
-            <View style={styles.overlayCard}>
-              <Text style={styles.overlayLabel}>{t.firstLabel}</Text>
-              <Text style={styles.overlayColor}>{current.currentPlayer}</Text>
-              <Text style={styles.overlayRole}>
-                {humanPlayers.includes(current.currentPlayer) ? t.playerLabel : t.aiLabel}
+        <View testID="online-game-board" style={styles.boardArea}>
+          <BoardComponent
+            board={current.board}
+            onCellClick={handleCellClick}
+            winningCells={current.winInfo?.cells}
+            winningPlayer={current.winInfo?.player ?? null}
+            validCells={validCells}
+            dragOverCell={drag.hoverCell}
+          />
+          {phase === 'announcing' && (
+            <AnnounceOverlay
+              player={current.currentPlayer}
+              label={t.firstLabel}
+              role={humanPlayers.includes(current.currentPlayer) ? t.playerLabel : t.aiLabel}
+            />
+          )}
+        </View>
+
+        <View style={styles.statusBar}>
+          {current.winner ? (
+            <View style={styles.victoryBlock}>
+              <Text testID="online-victory-text" style={styles.victoryText}>
+                {(current.winner as string) === 'DRAW'
+                  ? t.draw
+                  : t.playerWins(playerLabel(current.winner))}
               </Text>
+              {(current.winner as string) !== 'DRAW' && current.winInfo && (
+                <Text style={styles.victoryReason}>
+                  {current.winInfo.kind === 'CELL' ? t.winCell : t.winRow}
+                </Text>
+              )}
             </View>
+          ) : (
+            <View style={styles.statusLine}>
+              <Text style={styles.turnText}>{turnText}</Text>
+              {phase === 'playing' && takeoverSecondsLeft !== null && (
+                <Text style={styles.takeoverWarning}>
+                  {t.disconnected(current.currentPlayer, takeoverSecondsLeft)}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        {!current.winner && myColor && (
+          <View style={styles.activeHandWrapper}>
+            <PlayerHand
+              player={phase === 'playing' ? current.currentPlayer : rouletteHighlight}
+              hand={current.hands[phase === 'playing' ? current.currentPlayer : rouletteHighlight]}
+              selectedSize={phase === 'playing' ? selectedSize : null}
+              onSelectSize={handleSelectSize}
+              isCurrentPlayer={phase === 'playing'}
+              variant="full"
+              interactive={isMyTurn && phase === 'playing'}
+              draggingSize={drag.draggingSize}
+              label={
+                phase !== 'playing'
+                  ? ' '
+                  : isMyTurn
+                    ? t.yourHand
+                    : `${current.currentPlayer} (${humanPlayers.includes(current.currentPlayer) ? t.playerLabel : t.aiLabel})`
+              }
+            />
           </View>
         )}
-      </View>
 
-      <View style={styles.statusBar}>
         {current.winner ? (
-          <View style={styles.victoryBlock}>
-            <Text testID="online-victory-text" style={styles.victoryText}>
-              {t.playerWins(playerLabel(current.winner))}
-            </Text>
-            {current.winInfo && (
-              <Text style={styles.victoryReason}>
-                {current.winInfo.kind === 'CELL' ? t.winCell : t.winRow}
-              </Text>
-            )}
+          <View style={styles.victoryActions}>
+            <Button title={t.playAgain} variant="header" onPress={handleRestart} testID="online-play-again-btn" />
+            <Button title={t.leave} variant="header" onPress={handleLeave} testID="online-leave-btn" />
           </View>
         ) : (
-          <View style={styles.statusLine}>
-            <Text style={styles.turnText}>{turnText}</Text>
-            {phase === 'playing' && takeoverSecondsLeft !== null && (
-              <Text style={styles.takeoverWarning}>
-                {t.disconnected(current.currentPlayer, takeoverSecondsLeft)}
-              </Text>
-            )}
+          <View style={styles.leaveOnlineWrap}>
+            <Button title={t.leaveOnline} variant="ghost" onPress={handleLeave} testID="online-leave-btn" />
           </View>
         )}
-      </View>
+      </ScrollView>
 
-      {errorMsg ? (
-        <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />
-      ) : null}
+      {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
 
-      {!current.winner && myColor ? (
-        <View style={styles.activeHandWrapper}>
-          <PlayerHand
-            player={phase === 'playing' ? current.currentPlayer : rouletteHighlight}
-            hand={current.hands[phase === 'playing' ? current.currentPlayer : rouletteHighlight]}
-            selectedSize={phase === 'playing' ? selectedSize : null}
-            onSelectSize={handleSelectSize}
-            interactive={isMyTurn && phase === 'playing'}
-          />
-        </View>
-      ) : null}
-
-      {current.winner ? (
-        <View style={styles.victoryActions}>
-          <TouchableOpacity
-            testID="online-play-again-btn"
-            onPress={handleRestart}
-            style={styles.actionButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionButtonText}>{t.playAgain}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="online-leave-btn"
-            onPress={handleLeave}
-            style={styles.actionButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionButtonText}>{t.leave}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          testID="online-leave-btn"
-          onPress={handleLeave}
-          style={styles.leaveButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.leaveButtonText}>{t.leaveOnline}</Text>
-        </TouchableOpacity>
-      )}
-
-      {drag.ghost}
-
-      <Modal
+      <ConfirmDialog
         visible={!!confirmDialog}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmDialog(null)}
-      >
-        <TouchableOpacity
-          style={styles.dialogOverlay}
-          activeOpacity={1}
-          onPress={() => setConfirmDialog(null)}
-        >
-          <TouchableOpacity
-            style={styles.dialogCard}
-            activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <Text style={styles.dialogMessage}>{confirmDialog?.message}</Text>
-            <View style={styles.dialogButtons}>
-              <TouchableOpacity
-                style={[styles.dialogButton, styles.dialogCancel]}
-                onPress={() => setConfirmDialog(null)}
-              >
-                <Text style={styles.dialogButtonText}>{t.cancel}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.dialogButton, styles.dialogConfirm]}
-                onPress={() => {
-                  confirmDialog?.onConfirm();
-                  setConfirmDialog(null);
-                }}
-              >
-                <Text style={styles.dialogButtonText}>{t.ok}</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-    </View>
+        message={confirmDialog?.message ?? ''}
+        onConfirm={() => {
+          confirmDialog?.onConfirm();
+          setConfirmDialog(null);
+        }}
+        onCancel={() => setConfirmDialog(null)}
+      />
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    padding: SPACING.md,
-    gap: SPACING.md,
+  scrollContent: {
+    flexGrow: 1,
+    padding: 8,
+    gap: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  title: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.titleSm,
+    color: COLORS.boardFrame,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(255,255,255,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  roomCode: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 12,
+    color: COLORS.boardFrame,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   boardArea: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
     position: 'relative',
-    alignItems: 'center',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  overlayCard: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.xl,
-    borderRadius: 12,
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  overlayLabel: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-  },
-  overlayColor: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xxl,
-    fontWeight: 'bold',
-  },
-  overlayRole: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.md,
   },
   statusBar: {
+    minHeight: 42,
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    justifyContent: 'center',
+    paddingVertical: 4,
   },
   statusLine: {
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
   },
   turnText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.lg,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.status,
+    color: COLORS.boardFrame,
+    textAlign: 'center',
   },
   takeoverWarning: {
-    color: COLORS.accent,
-    fontSize: FONT_SIZE.sm,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.body,
+    color: PLAYER_BORDER_COLORS.RED,
+    backgroundColor: 'rgba(255,235,130,0.5)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   victoryBlock: {
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
   },
   victoryText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xl,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.victory,
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
   },
   victoryReason: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.victoryReason,
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
-  activeHandWrapper: {
-    width: '100%',
-  },
+  activeHandWrapper: { alignItems: 'center' },
   victoryActions: {
     flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  actionButton: {
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  actionButtonText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
-  },
-  leaveButton: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 6,
-  },
-  leaveButtonText: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
-  },
-  dialogOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
+    gap: 12,
     justifyContent: 'center',
   },
-  dialogCard: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.xl,
-    borderRadius: 12,
-    width: '80%',
-    gap: SPACING.lg,
-  },
-  dialogMessage: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.md,
-    textAlign: 'center',
-  },
-  dialogButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  dialogButton: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: 8,
-  },
-  dialogCancel: {
-    backgroundColor: COLORS.surfaceAlt,
-  },
-  dialogConfirm: {
-    backgroundColor: COLORS.accent,
-  },
-  dialogButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
-  },
+  leaveOnlineWrap: { alignItems: 'center', marginTop: 4 },
 });
 
 export default OnlineGame;

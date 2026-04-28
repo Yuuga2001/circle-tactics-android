@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Action, GameState, PieceSize, Player, SIZES } from '../types';
 import { findBestMove } from '../logic/ai';
 import { hasAnyValidMove } from '../logic/winConditions';
@@ -14,8 +8,17 @@ import { useGameSounds } from '../hooks/useGameSounds';
 import BoardComponent from './Board';
 import PlayerHand from './PlayerHand';
 import HandsSummary from './HandsSummary';
+import Button from './ui/Button';
+import ScreenContainer from './ui/ScreenContainer';
+import AnnounceOverlay from './AnnounceOverlay';
+import Confetti from './Confetti';
 import { useBoardDrag } from './useBoardDrag';
-import { COLORS, FONT_SIZE, SPACING, PLAYER_COLORS } from '../styles/theme';
+import {
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  PlayerKey,
+} from '../styles/theme';
 
 const AI_THINKING_TIME = 1000;
 
@@ -29,8 +32,7 @@ interface GameProps {
 const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   const { t } = useLang();
   const { play } = useGameSounds();
-  const { board, hands, currentPlayer, turnOrder, winner, winInfo, selectedSize, humanPlayers } =
-    state;
+  const { board, hands, currentPlayer, turnOrder, winner, winInfo, selectedSize, humanPlayers } = state;
   const isCurrentHuman = humanPlayers.includes(currentPlayer);
   const isAITurn = !isCurrentHuman && !winner;
 
@@ -40,7 +42,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   const [skippingPlayer, setSkippingPlayer] = useState<Player | null>(null);
   const consecutiveSkipsRef = useRef(0);
 
-  // Roulette animation
+  // ── Roulette animation ──
   useEffect(() => {
     if (phase !== 'rouletting') return;
     const order = turnOrderRef.current;
@@ -59,7 +61,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     return () => timeouts.forEach(clearTimeout);
   }, [phase]);
 
-  // Announce overlay → playing
+  // Announce → playing
   useEffect(() => {
     if (phase !== 'announcing') return;
     const timer = setTimeout(() => setPhase('playing'), 1200);
@@ -84,7 +86,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     return () => clearTimeout(timer);
   }, [phase, currentPlayer, winner, isAITurn, skippingPlayer, board, hands, state, dispatch]);
 
-  // Auto-skip
+  // Auto-skip / declare draw
   useEffect(() => {
     if (phase !== 'playing' || !!winner || skippingPlayer !== null) return;
     if (hasAnyValidMove(board, hands[currentPlayer])) {
@@ -104,12 +106,10 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     return () => clearTimeout(timer);
   }, [phase, winner, currentPlayer, board, hands, skippingPlayer, turnOrder, dispatch]);
 
-  // Sound effects
+  // Sounds
   const prevRouletteRef = useRef(rouletteHighlight);
   useEffect(() => {
-    if (phase === 'rouletting' && rouletteHighlight !== prevRouletteRef.current) {
-      play('roulette');
-    }
+    if (phase === 'rouletting' && rouletteHighlight !== prevRouletteRef.current) play('roulette');
     prevRouletteRef.current = rouletteHighlight;
   }, [rouletteHighlight, phase, play]);
 
@@ -215,187 +215,180 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   const summaryHighlight = phase === 'playing' ? currentPlayer : rouletteHighlight;
   const displayedPlayer = summaryHighlight;
 
+  const victoryOverlay: PlayerKey | null =
+    winner && winner !== 'DRAW' ? (winner as PlayerKey) : null;
+
   return (
-    <View style={styles.container}>
-      {/* HandsSummary */}
-      <HandsSummary
-        hands={hands}
-        players={turnOrder}
-        currentPlayer={summaryHighlight}
-      />
+    <ScreenContainer victoryOverlay={victoryOverlay}>
+      {winner && winner !== 'DRAW' && <Confetti />}
 
-      {/* Board area */}
-      <View testID="game-board" style={styles.boardArea}>
-        <BoardComponent
-          board={board}
-          onCellClick={handleCellClick}
-          winningCells={winInfo?.cells}
-          validCells={validCells}
-        />
-
-        {/* Announcing overlay */}
-        {phase === 'announcing' && (
-          <View style={[styles.overlay, { backgroundColor: PLAYER_COLORS[currentPlayer] + 'cc' }]}>
-            <View style={styles.overlayCard}>
-              <Text style={styles.overlayLabel}>{t.firstLabel}</Text>
-              <Text style={styles.overlayColor}>{currentPlayer}</Text>
-              <Text style={styles.overlayRole}>
-                {humanPlayers.includes(currentPlayer) ? t.playerLabel : t.aiLabel}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Skip overlay */}
-        {skippingPlayer && (
-          <View
-            testID="skip-overlay"
-            style={[styles.overlay, { backgroundColor: PLAYER_COLORS[skippingPlayer] + 'cc' }]}
-          >
-            <View style={styles.overlayCard}>
-              <Text style={styles.overlayLabel}>{t.skipLabel}</Text>
-              <Text style={styles.overlayColor}>{skippingPlayer}</Text>
-              <Text style={styles.overlayRole}>{t.noMoves}</Text>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Status bar */}
-      <View style={styles.statusBar}>
-        {winner ? (
-          <View style={styles.victoryBlock}>
-            <Text testID="victory-text" style={styles.victoryText}>
-              {winner === 'DRAW' ? t.draw : t.playerWins(playerLabel(winner))}
-            </Text>
-            {winner !== 'DRAW' && winInfo && (
-              <Text style={styles.victoryReason}>
-                {winInfo.kind === 'CELL' ? t.winCell : t.winRow}
-              </Text>
-            )}
-          </View>
-        ) : (
-          <Text testID="turn-text" style={styles.turnText}>
-            {turnText}
-          </Text>
-        )}
-      </View>
-
-      {/* Active hand */}
-      {!winner && (
-        <PlayerHand
-          player={displayedPlayer}
-          hand={hands[displayedPlayer]}
-          selectedSize={phase === 'playing' ? selectedSize : null}
-          onSelectSize={handleSelectSize}
-          interactive={interactionAllowed}
-        />
-      )}
-
-      {/* Victory actions */}
-      {winner && (
-        <View style={styles.victoryActions}>
-          <TouchableOpacity
-            testID="play-again-btn"
-            onPress={handleRestart}
-            style={styles.actionButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionButtonText}>{t.playAgain}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="title-btn"
-            onPress={handleReturnToTitle}
-            style={styles.actionButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionButtonText}>{t.titleBtn}</Text>
-          </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>CircleTactics</Text>
         </View>
-      )}
-    </View>
+
+        <HandsSummary
+          hands={hands}
+          players={turnOrder}
+          humanPlayers={humanPlayers}
+          currentPlayer={summaryHighlight}
+          myColor={humanPlayers.length === 1 ? humanPlayers[0] : null}
+        />
+
+        <View style={styles.boardArea}>
+          <BoardComponent
+            board={board}
+            onCellClick={handleCellClick}
+            winningCells={winInfo?.cells}
+            winningPlayer={winInfo?.player ?? null}
+            validCells={validCells}
+            dragOverCell={drag.hoverCell}
+          />
+          {phase === 'announcing' && (
+            <AnnounceOverlay
+              player={currentPlayer}
+              label={t.firstLabel}
+              role={humanPlayers.includes(currentPlayer) ? t.playerLabel : t.aiLabel}
+            />
+          )}
+          {skippingPlayer && (
+            <AnnounceOverlay
+              player={skippingPlayer}
+              label={t.skipLabel}
+              role={t.noMoves}
+            />
+          )}
+        </View>
+
+        {/* Status */}
+        <View style={styles.statusBar}>
+          {winner ? (
+            <View style={styles.victoryBlock}>
+              <Text testID="victory-text" style={styles.victoryText}>
+                {winner === 'DRAW' ? t.draw : t.playerWins(playerLabel(winner))}
+              </Text>
+              {winner !== 'DRAW' && winInfo && (
+                <Text style={styles.victoryReason}>
+                  {winInfo.kind === 'CELL' ? t.winCell : t.winRow}
+                </Text>
+              )}
+            </View>
+          ) : (
+            <Text testID="turn-text" style={styles.turnText}>
+              {turnText}
+            </Text>
+          )}
+        </View>
+
+        {/* Active hand */}
+        {!winner && (
+          <View style={styles.activeHandWrapper}>
+            <PlayerHand
+              player={displayedPlayer}
+              hand={hands[displayedPlayer]}
+              selectedSize={phase === 'playing' ? selectedSize : null}
+              onSelectSize={handleSelectSize}
+              isCurrentPlayer={phase === 'playing'}
+              variant="full"
+              interactive={interactionAllowed}
+              draggingSize={drag.draggingSize}
+              label={
+                phase !== 'playing'
+                  ? ' '
+                  : isCurrentHuman
+                    ? humanPlayers.length === 1
+                      ? t.yourHand
+                      : `${currentPlayer} - ${t.yourHand}`
+                    : `${currentPlayer} (${t.aiLabel})`
+              }
+            />
+          </View>
+        )}
+
+        {/* Victory actions */}
+        {winner && (
+          <View style={styles.victoryActions}>
+            <Button title={t.playAgain} variant="header" onPress={handleRestart} testID="play-again-btn" />
+            <Button title={t.titleBtn} variant="header" onPress={handleReturnToTitle} testID="title-btn" />
+          </View>
+        )}
+      </ScrollView>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    padding: SPACING.md,
-    gap: SPACING.md,
+  scrollContent: {
+    flexGrow: 1,
+    padding: 8,
+    gap: 8,
+  },
+  header: {
+    paddingTop: 4,
+    paddingBottom: 8,
+    alignItems: 'flex-start',
+  },
+  title: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.titleSm,
+    color: COLORS.boardFrame,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(255,255,255,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   boardArea: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
     position: 'relative',
-    alignItems: 'center',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  overlayCard: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.xl,
-    borderRadius: 12,
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  overlayLabel: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-  },
-  overlayColor: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xxl,
-    fontWeight: 'bold',
-  },
-  overlayRole: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.md,
   },
   statusBar: {
+    minHeight: 42,
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    justifyContent: 'center',
+    paddingVertical: 4,
   },
   turnText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.lg,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.status,
+    color: COLORS.boardFrame,
+    textAlign: 'center',
   },
   victoryBlock: {
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
   },
   victoryText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xl,
-    fontWeight: 'bold',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.victory,
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
   },
   victoryReason: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZE.sm,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.victoryReason,
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
+  },
+  activeHandWrapper: {
+    alignItems: 'center',
   },
   victoryActions: {
     flexDirection: 'row',
-    gap: SPACING.md,
-    marginTop: SPACING.sm,
-  },
-  actionButton: {
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  actionButtonText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
+    gap: 12,
+    justifyContent: 'center',
+    marginTop: 4,
   },
 });
 

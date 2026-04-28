@@ -154,19 +154,19 @@ describe('Game component', () => {
     const state = makePlaying({
       winner: 'RED',
       gameMode: 'PLAYING',
-      winInfo: { kind: 'CELL', cells: [{ row: 0, col: 0, size: 0 }] },
+      winInfo: { player: 'RED', kind: 'CELL', cells: [{ row: 0, col: 0 }] },
     });
     const { getByText } = render(<GameComponent state={state} dispatch={dispatch} />);
     act(() => { jest.runAllTimers(); });
     expect(getByText('Cell win')).toBeTruthy();
   });
 
-  it('winInfo.kind=ROW のとき winRow テキストが表示される', () => {
+  it('winInfo.kind=BOARD のとき winRow テキストが表示される', () => {
     const dispatch = jest.fn();
     const state = makePlaying({
       winner: 'RED',
       gameMode: 'PLAYING',
-      winInfo: { kind: 'ROW', cells: [{ row: 0, col: 0, size: 0 }] },
+      winInfo: { player: 'RED', kind: 'BOARD', cells: [{ row: 0, col: 0 }] },
     });
     const { getByText } = render(<GameComponent state={state} dispatch={dispatch} />);
     act(() => { jest.runAllTimers(); });
