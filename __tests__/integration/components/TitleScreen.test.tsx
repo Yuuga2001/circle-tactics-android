@@ -46,6 +46,12 @@ jest.mock('../../../src/i18n/index', () => ({
       chooseAtLeastOne: 'Choose at least one player',
       playLocal: 'Play Local',
       playOnline: 'Play Online',
+      start: 'Start',
+      back: '← Back',
+      rule3: 'Take turns on the same device.',
+      howToPlayTitle: 'How to Play',
+      rule1: 'Rule 1',
+      rule2: 'Rule 2',
     },
     lang: 'en',
     setLang: jest.fn(),
@@ -53,112 +59,119 @@ jest.mock('../../../src/i18n/index', () => ({
   LangProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-describe('TitleScreen component', () => {
+// helpers
+function renderTitle() {
+  const onPlayLocal = jest.fn();
+  const onPlayOnline = jest.fn();
+  const utils = render(<TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />);
+  return { ...utils, onPlayLocal, onPlayOnline };
+}
+
+/** menu モード → local モードへ遷移するヘルパー */
+function goToLocalMode(getByTestId: ReturnType<typeof render>['getByTestId']) {
+  fireEvent.press(getByTestId('play-local-btn'));
+}
+
+describe('TitleScreen — menu モード', () => {
   it('title-screen が表示される', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
+    const { getByTestId } = renderTitle();
     expect(getByTestId('title-screen')).toBeTruthy();
   });
 
   it('"CircleTactics" の title-text が表示される', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
+    const { getByTestId } = renderTitle();
     const titleEl = getByTestId('title-text');
     expect(titleEl).toBeTruthy();
     expect(titleEl.props.children).toBe('CircleTactics');
   });
 
   it('play-local-btn が存在する', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
+    const { getByTestId } = renderTitle();
     expect(getByTestId('play-local-btn')).toBeTruthy();
   });
 
+  it('play-online-btn が存在する', () => {
+    const { getByTestId } = renderTitle();
+    expect(getByTestId('play-online-btn')).toBeTruthy();
+  });
+
   it('play-online-btn タップで onPlayOnline が呼ばれる', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
+    const { getByTestId, onPlayOnline } = renderTitle();
     fireEvent.press(getByTestId('play-online-btn'));
     expect(onPlayOnline).toHaveBeenCalledTimes(1);
   });
 
-  it('play-local-btn タップで onPlayLocal が人間プレイヤー配列を渡して呼ばれる', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    // デフォルトでREDがhuman
-    fireEvent.press(getByTestId('play-local-btn'));
-    expect(onPlayLocal).toHaveBeenCalledWith(['RED']);
+  it('menu モードでは seat-toggle が表示されない', () => {
+    const { queryByTestId } = renderTitle();
+    expect(queryByTestId('seat-toggle-RED')).toBeNull();
   });
 
-  it('全4席のシートトグルが存在する', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    ['RED', 'BLUE', 'YELLOW', 'GREEN'].forEach((player) => {
-      expect(getByTestId(`seat-toggle-${player}`)).toBeTruthy();
+  it('play-local-btn タップで local モードへ遷移する（onPlayLocal は呼ばれない）', () => {
+    const { getByTestId, queryByTestId, onPlayLocal } = renderTitle();
+    fireEvent.press(getByTestId('play-local-btn'));
+    expect(onPlayLocal).not.toHaveBeenCalled();
+    // local モードへ遷移して seat-toggle が現れる
+    expect(queryByTestId('seat-toggle-RED')).toBeTruthy();
+  });
+});
+
+describe('TitleScreen — local モード（座席設定）', () => {
+  it('全4席のシートトグルが表示される', () => {
+    const { getByTestId } = renderTitle();
+    goToLocalMode(getByTestId);
+    ['RED', 'BLUE', 'YELLOW', 'GREEN'].forEach((p) => {
+      expect(getByTestId(`seat-toggle-${p}`)).toBeTruthy();
     });
   });
 
+  it('Start ボタンタップで onPlayLocal がデフォルト人間配列を渡して呼ばれる', () => {
+    const { getByTestId, onPlayLocal } = renderTitle();
+    goToLocalMode(getByTestId);
+    fireEvent.press(getByTestId('play-local-btn')); // local モードの Start ボタン
+    expect(onPlayLocal).toHaveBeenCalledWith(['RED']);
+  });
+
   it('シートをトグルして複数の人間プレイヤーでプレイできる', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    // BLUEをhuman に切り替え
+    const { getByTestId, onPlayLocal } = renderTitle();
+    goToLocalMode(getByTestId);
     fireEvent.press(getByTestId('seat-toggle-BLUE'));
     fireEvent.press(getByTestId('play-local-btn'));
     expect(onPlayLocal).toHaveBeenCalledWith(['RED', 'BLUE']);
   });
 
-  it('REDをAIにトグルすると全席AI → 警告テキストが表示される', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId, getByText } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    // デフォルトはRED=human, 他=ai → REDをAIに切り替えで全員AI
+  it('最後の人間席（RED）はロックされてタップしても切り替わらない', () => {
+    const { getByTestId, onPlayLocal } = renderTitle();
+    goToLocalMode(getByTestId);
+    // RED が唯一の人間 → disabled なのでタップしても切り替わらない
     fireEvent.press(getByTestId('seat-toggle-RED'));
-    expect(getByText('Choose at least one player')).toBeTruthy();
+    fireEvent.press(getByTestId('play-local-btn'));
+    expect(onPlayLocal).toHaveBeenCalledWith(['RED']); // 変化なし
   });
 
-  it('全席AIのとき play-local-btn を押しても onPlayLocal が呼ばれない', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    fireEvent.press(getByTestId('seat-toggle-RED')); // RED → ai → humanCount=0
+  it('BLUEをhumanにしてからREDをAIに戻せる', () => {
+    const { getByTestId, onPlayLocal } = renderTitle();
+    goToLocalMode(getByTestId);
+    fireEvent.press(getByTestId('seat-toggle-BLUE')); // BLUE → human
+    fireEvent.press(getByTestId('seat-toggle-RED'));   // RED → ai（BLUEが残るのでOK）
     fireEvent.press(getByTestId('play-local-btn'));
-    expect(onPlayLocal).not.toHaveBeenCalled();
+    expect(onPlayLocal).toHaveBeenCalledWith(['BLUE']);
   });
 
   it('humanをAIに戻せる（double-toggle）', () => {
-    const onPlayLocal = jest.fn();
-    const onPlayOnline = jest.fn();
-    const { getByTestId } = render(
-      <TitleScreen onPlayLocal={onPlayLocal} onPlayOnline={onPlayOnline} />,
-    );
-    // BLUE: ai → human → ai
+    const { getByTestId, onPlayLocal } = renderTitle();
+    goToLocalMode(getByTestId);
     fireEvent.press(getByTestId('seat-toggle-BLUE')); // ai→human
     fireEvent.press(getByTestId('seat-toggle-BLUE')); // human→ai
     fireEvent.press(getByTestId('play-local-btn'));
     expect(onPlayLocal).toHaveBeenCalledWith(['RED']); // BLUEは外れる
+  });
+
+  it('Back ボタンで menu モードに戻る', () => {
+    const { getByTestId, queryByTestId } = renderTitle();
+    goToLocalMode(getByTestId);
+    expect(queryByTestId('seat-toggle-RED')).toBeTruthy();
+    fireEvent.press(getByTestId('back-btn'));
+    expect(queryByTestId('seat-toggle-RED')).toBeNull();
+    expect(queryByTestId('play-online-btn')).toBeTruthy();
   });
 });

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Player, PLAYERS } from '../types';
 import { DEFAULT_HUMAN_FLAGS } from '../logic/seating';
 import { useLang } from '../i18n';
@@ -35,36 +35,71 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
   const canStart = humanCount >= 1;
 
   const toggleRole = (player: Player) => {
-    setHumanFlags((prev) => ({ ...prev, [player]: !prev[player] }));
+    const isLastHuman = humanFlags[player] && humanCount === 1;
+    if (!isLastHuman) {
+      setHumanFlags((prev) => ({ ...prev, [player]: !prev[player] }));
+    }
   };
 
-  return (
-    <ScreenContainer scroll>
-      <View testID="title-screen" style={styles.container}>
-        <View style={styles.header}>
-          <Text testID="title-text" style={styles.title}>CircleTactics</Text>
-          <Text style={styles.subtitle}>{t.subtitle}</Text>
-        </View>
+  // ── menu モード ──────────────────────────────────────────────────────────
+  if (mode === 'menu') {
+    return (
+      <ScreenContainer scroll>
+        <View testID="title-screen" style={styles.container}>
+          <View style={styles.header}>
+            <Text testID="title-text" style={styles.title}>CircleTactics</Text>
+            <Text style={styles.subtitle}>{t.subtitle}</Text>
+          </View>
 
-        {mode === 'menu' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.howToPlayTitle}</Text>
             <Text style={styles.rule}>• {t.rule1}</Text>
             <Text style={styles.rule}>• {t.rule2}</Text>
           </View>
-        )}
+
+          <Button
+            title={t.playLocal}
+            variant="play"
+            size="lg"
+            onPress={() => setMode('local')}
+            testID="play-local-btn"
+          />
+          <Button
+            title={t.playOnline}
+            variant="online"
+            size="lg"
+            onPress={onPlayOnline}
+            testID="play-online-btn"
+          />
+
+          <DemoBoard />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // ── local モード（座席設定） ───────────────────────────────────────────────
+  return (
+    <ScreenContainer scroll>
+      <View testID="title-screen" style={styles.container}>
+        <View style={styles.header}>
+          <Text testID="title-text" style={styles.title}>Local Play</Text>
+          <Text style={styles.subtitle}>{t.setSeats}</Text>
+          <Text style={styles.subtitleHint}>{t.rule3}</Text>
+        </View>
 
         <View style={styles.section}>
-          <Text style={styles.subtitle}>{t.setSeats}</Text>
           <View style={styles.seatGrid}>
             {PLAYERS.map((p) => {
               const role: Role = humanFlags[p] ? 'HUMAN' : 'AI';
+              const isLastHuman = role === 'HUMAN' && humanCount === 1;
               const dark = PLAYER_BORDER_COLORS[p];
               const tint = PLAYER_SEAT_TINT[p];
               return (
                 <Pressable
                   key={p}
                   testID={`seat-toggle-${p}`}
+                  disabled={isLastHuman}
                   onPress={() => toggleRole(p)}
                   style={({ pressed }) => [
                     styles.seatCard,
@@ -72,24 +107,15 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
                       ? { borderColor: dark, backgroundColor: tint, ...SHADOWS.subtle }
                       : { borderColor: 'rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.7)', opacity: 0.85 },
                     role === 'HUMAN' ? styles.seatActive : null,
-                    pressed ? { transform: [{ translateY: 1 }, { scale: 0.99 }] } : null,
+                    isLastHuman ? styles.seatLocked : null,
+                    pressed && !isLastHuman ? { transform: [{ translateY: 1 }, { scale: 0.99 }] } : null,
                   ]}
                 >
                   <View style={styles.seatHeader}>
-                    <View
-                      style={[
-                        styles.seatDot,
-                        { backgroundColor: PLAYER_COLORS[p], borderColor: dark },
-                      ]}
-                    />
+                    <View style={[styles.seatDot, { backgroundColor: PLAYER_COLORS[p], borderColor: dark }]} />
                     <Text style={[styles.seatLabel, { color: dark }]}>{p}</Text>
                   </View>
-                  <View
-                    style={[
-                      styles.seatRole,
-                      role === 'HUMAN' ? styles.seatRoleActive : null,
-                    ]}
-                  >
+                  <View style={[styles.seatRole, role === 'HUMAN' ? styles.seatRoleActive : null]}>
                     <Text style={styles.seatRoleIcon}>{role === 'HUMAN' ? '👤' : '🤖'}</Text>
                     <Text style={styles.seatRoleText}>
                       {role === 'HUMAN' ? t.playerLabel : t.aiLabel}
@@ -118,7 +144,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
         </View>
 
         <Button
-          title={t.playLocal}
+          title={t.start}
           variant="play"
           size="lg"
           disabled={!canStart}
@@ -126,14 +152,12 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
           testID="play-local-btn"
         />
         <Button
-          title={t.playOnline}
-          variant="online"
+          title={t.back}
+          variant="ghost"
           size="lg"
-          onPress={onPlayOnline}
-          testID="play-online-btn"
+          onPress={() => setMode('menu')}
+          testID="back-btn"
         />
-
-        {mode === 'menu' && <DemoBoard />}
       </View>
     </ScreenContainer>
   );
@@ -163,6 +187,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.regular,
     fontSize: FONT_SIZE.body,
     color: COLORS.textMuted,
+    textAlign: 'center',
   },
   subtitleHint: {
     marginTop: 4,
@@ -212,6 +237,9 @@ const styles = StyleSheet.create({
   },
   seatActive: {
     ...SHADOWS.subtle,
+  },
+  seatLocked: {
+    opacity: 0.6,
   },
   seatHeader: {
     flexDirection: 'row',
