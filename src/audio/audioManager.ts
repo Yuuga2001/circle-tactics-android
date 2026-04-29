@@ -23,12 +23,25 @@ class AudioManager {
   private pools: Partial<Record<SoundName, AudioPlayer[]>> = {};
   private poolIndex: Partial<Record<SoundName, number>> = {};
   private bgmPlayer: AudioPlayer | null = null;
+  private keepalivePlayer: AudioPlayer | null = null;
   private bgmMuted = false;
   private seMuted = false;
 
   async initialize(): Promise<void> {
     try {
       await setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' });
+    } catch {
+      // noop
+    }
+
+    // 無音ループで AudioTrack を常時アクティブに保つ。
+    // これがないと BGM OFF 時に AudioTrack が毎回コールドスタートし、
+    // SE 冒頭に初期化ノイズ（音割れ）が発生する Android の既知問題への対処。
+    try {
+      this.keepalivePlayer = createAudioPlayer(require('../../assets/sounds/silent.wav'));
+      this.keepalivePlayer.volume = 0;
+      this.keepalivePlayer.loop = true;
+      this.keepalivePlayer.play();
     } catch {
       // noop
     }
