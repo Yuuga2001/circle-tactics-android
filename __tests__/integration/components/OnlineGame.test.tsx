@@ -94,6 +94,11 @@ jest.mock('../../../src/i18n/index', () => ({
       playerLabel: 'Player',
       aiLabel: 'AI',
       yourHand: 'Your Hand',
+      networkErrorTitle: 'Connection Error',
+      networkErrorDesc: 'Check your connection.\nReconnecting…',
+      retryBtn: 'Retry',
+      errorTitle: 'Something went wrong',
+      errorDesc: 'Please try again.',
     },
     lang: 'en',
     setLang: jest.fn(),
@@ -697,5 +702,145 @@ describe('OnlineGame', () => {
     );
     const timerEl = getByTestId('timer-other');
     expect(timerEl.props.children).toEqual([9, 's']);
+  });
+
+  // ── NetworkErrorView: ポーリングエラー検知UI ──────────────────────────────
+
+  it('usePolling が error を返してもすぐには network-error-overlay が表示されない', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+
+    usePolling.mockReturnValue({ session: null, error: new Error('network'), setSession: jest.fn() });
+    const { queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    // 3s 未満なのでまだ表示されない
+    act(() => { jest.advanceTimersByTime(2999); });
+    expect(queryByTestId('network-error-overlay')).toBeNull();
+  });
+
+  it('usePolling の error が 3000ms 継続すると network-error-overlay が表示される', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+
+    usePolling.mockReturnValue({ session: null, error: new Error('network'), setSession: jest.fn() });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(3000); });
+    expect(getByTestId('network-error-overlay')).toBeTruthy();
+  });
+
+  it('network-error-overlay が表示されたとき networkErrorTitle が見える', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+
+    usePolling.mockReturnValue({ session: null, error: new Error('network'), setSession: jest.fn() });
+    const { getByText } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(3000); });
+    expect(getByText('Connection Error')).toBeTruthy();
+  });
+
+  it('error が 3000ms 未満で解消されると network-error-overlay は表示されない', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+
+    // エラー発生
+    usePolling.mockReturnValue({ session: null, error: new Error('network'), setSession: jest.fn() });
+    const { queryByTestId, rerender } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(2000); });
+
+    // 3s 経過前にエラー解消
+    usePolling.mockReturnValue({ session: null, error: null, setSession: jest.fn() });
+    rerender(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(2000); });
+    expect(queryByTestId('network-error-overlay')).toBeNull();
+  });
+
+  it('overlay 表示後にエラーが解消すると network-error-overlay が消える', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+
+    // エラー → overlay 表示
+    usePolling.mockReturnValue({ session: null, error: new Error('network'), setSession: jest.fn() });
+    const { queryByTestId, rerender } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(3000); });
+    expect(queryByTestId('network-error-overlay')).toBeTruthy();
+
+    // エラー解消
+    usePolling.mockReturnValue({ session: null, error: null, setSession: jest.fn() });
+    rerender(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(queryByTestId('network-error-overlay')).toBeNull();
+  });
+
+  it('error なし → 有効なセッション polling でも network-error-overlay は表示されない', () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+    const session = makePlayingSession({ currentPlayer: 'RED' });
+    const newSession = makePlayingSession({ currentPlayer: 'BLUE', version: 2 });
+
+    usePolling.mockReturnValue({ session: newSession, error: null, setSession: jest.fn() });
+    const { queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(5000); });
+    expect(queryByTestId('network-error-overlay')).toBeNull();
   });
 });
