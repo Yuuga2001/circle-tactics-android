@@ -89,9 +89,9 @@ describe('AppChrome', () => {
     useSegments.mockReturnValue([]);
   });
 
-  it('タイトル画面では CircleTactics テキストが表示される', () => {
-    const { getByText } = renderWithSafeArea(<AppChrome />);
-    expect(getByText('CircleTactics')).toBeTruthy();
+  it('タイトル画面では CircleTactics テキストは表示されない（タイトルロゴで代替）', () => {
+    const { queryByText } = renderWithSafeArea(<AppChrome />);
+    expect(queryByText('CircleTactics')).toBeNull();
   });
 
   it('segments が空（タイトル画面）でも MenuButton は常時表示される', () => {
@@ -131,11 +131,10 @@ describe('AppChrome', () => {
     expect(queryByText('Language')).toBeNull();
   });
 
-  it('タイトル画面では左側に CircleTactics タイトルが表示される', () => {
+  it('タイトル画面では左側の CircleTactics タイトルは非表示', () => {
     useSegments.mockReturnValue([]);
-    const { getByText, queryByText } = renderWithSafeArea(<AppChrome />);
-    expect(getByText('CircleTactics')).toBeTruthy();
-    expect(queryByText('Language')).toBeNull();
+    const { queryByText } = renderWithSafeArea(<AppChrome />);
+    expect(queryByText('CircleTactics')).toBeNull();
   });
 
   it('online/playing モードで Leave → OK で clearActiveGame と router.replace が呼ばれる', async () => {

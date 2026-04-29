@@ -40,7 +40,7 @@ const AppChrome: React.FC = () => {
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <View style={[styles.left, { top: topOffset }]} pointerEvents="box-none">
-        <Text style={styles.appTitle}>CircleTactics</Text>
+        {mode !== 'title' && <Text style={styles.appTitle}>CircleTactics</Text>}
         {!!roomCode && (
           <Text style={styles.roomCodeBadge}>#{roomCode}</Text>
         )}
