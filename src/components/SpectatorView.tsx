@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { GameSession } from '../online/types';
 import { usePolling } from '../online/usePolling';
+import { setLiveRoomCode, setLivePlayerCount } from '../online/activeGame';
 import { useLang } from '../i18n';
 import BoardComponent from './Board';
 import HandsSummary from './HandsSummary';
 import ScreenContainer from './ui/ScreenContainer';
-import Button from './ui/Button';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS } from '../styles/theme';
 
 interface SpectatorViewProps {
@@ -22,13 +22,25 @@ const SpectatorView: React.FC<SpectatorViewProps> = ({
   clientId,
   session: initialSession,
   onJoined,
-  onLeave,
 }) => {
   const { t } = useLang();
   const { session: polledSession } = usePolling(gameId, { intervalMs: 2000 });
   const promotedRef = useRef(false);
 
   const session = polledSession ?? initialSession;
+
+  // AppChrome にルームコードとプレイヤー数を公開
+  useEffect(() => {
+    setLiveRoomCode(session.roomCode ?? null);
+    return () => { setLiveRoomCode(null); };
+  }, [session.roomCode]);
+
+  useEffect(() => {
+    const humanCount = session.players.filter((p) => p.isHuman).length;
+    const spectators = session.waitQueue?.length ?? 0;
+    setLivePlayerCount(humanCount + spectators);
+    return () => { setLivePlayerCount(null); };
+  }, [session.players, session.waitQueue]);
 
   useEffect(() => {
     if (!polledSession || promotedRef.current) return;
@@ -49,22 +61,18 @@ const SpectatorView: React.FC<SpectatorViewProps> = ({
 
   return (
     <ScreenContainer>
-      <ScrollView testID="spectator-view" contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.titleGroup}>
-            <Text style={styles.title}>CircleTactics</Text>
-            {!!session?.roomCode && <Text style={styles.roomCode}>#{session.roomCode}</Text>}
-          </View>
-          <Button title={t.leave} variant="header" size="sm" onPress={onLeave} />
-        </View>
-
+      <ScrollView
+        testID="spectator-view"
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.queueBanner}>
           {queuePosition !== null ? (
             <>
               <Text style={styles.queueTitle}>⏳ {t.waitingToJoin}</Text>
               <Text style={styles.queueSub}>
                 {t.queuePos(queuePosition)}
-                {queuePosition === 1 ? ` — ${t.youreNext}` : ''}
+                {queuePosition === 1 ? ` — ${t.youreNext}` : ` — ${t.willJoinAuto}`}
               </Text>
             </>
           ) : (
@@ -119,35 +127,10 @@ const SpectatorView: React.FC<SpectatorViewProps> = ({
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    padding: 8,
+    paddingTop: 56,
+    paddingHorizontal: 8,
+    paddingBottom: 24,
     gap: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  titleGroup: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  title: {
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.titleSm,
-    color: COLORS.boardFrame,
-    letterSpacing: 1,
-  },
-  roomCode: {
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: 12,
-    color: COLORS.boardFrame,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    overflow: 'hidden',
   },
   queueBanner: {
     backgroundColor: 'rgba(255,255,255,0.7)',
@@ -169,6 +152,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.regular,
     fontSize: FONT_SIZE.body,
     color: COLORS.textMuted,
+    textAlign: 'center',
   },
   boardArea: {
     width: '100%',

@@ -18,7 +18,7 @@ const AppChrome: React.FC = () => {
   let mode: MenuMode = 'other';
   if (top === '' || segments.length === 0 || top === 'index') mode = 'title';
   else if (top === 'local') mode = 'local';
-  else if (top === 'online' && second === 'playing') mode = 'online';
+  else if (top === 'online' && (second === 'playing' || second === 'spectating' || second === 'waiting')) mode = 'online';
 
   const isPlaying = mode === 'local' || mode === 'online';
   const roomCode = useLiveRoomCode();

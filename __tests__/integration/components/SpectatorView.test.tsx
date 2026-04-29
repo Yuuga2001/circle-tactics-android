@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
+import { render, act, waitFor } from '@testing-library/react-native';
 import SpectatorView from '../../../src/components/SpectatorView';
-import type { GameSession, ServerPlayer } from '../../../src/online/types';
+import { GameSession, ServerPlayer } from '../../../src/online/types';
 
 // ── モック定義 ────────────────────────────────────────────────────────────────
 
@@ -9,6 +9,11 @@ let mockPolledSession: GameSession | null = null;
 
 jest.mock('../../../src/online/usePolling', () => ({
   usePolling: () => ({ session: mockPolledSession, error: null, setSession: jest.fn() }),
+}));
+
+jest.mock('../../../src/online/activeGame', () => ({
+  setLiveRoomCode: jest.fn(),
+  setLivePlayerCount: jest.fn(),
 }));
 
 jest.mock('../../../src/i18n/index', () => ({
@@ -19,6 +24,7 @@ jest.mock('../../../src/i18n/index', () => ({
       waitingToJoin: 'Waiting to join',
       queuePos: (n: number) => `#${n}`,
       youreNext: "You're next",
+      willJoinAuto: 'Will join auto',
       joiningLabel: 'Joining...',
       loading: 'Loading...',
       playerWins: (p: string) => `${p} WINS!`,
@@ -29,7 +35,6 @@ jest.mock('../../../src/i18n/index', () => ({
   }),
 }));
 
-// Board と HandsSummary のモック（テストの重点をSpectatorViewに絞る）
 jest.mock('../../../src/components/Board', () => ({
   __esModule: true,
   default: () => {
@@ -49,12 +54,7 @@ jest.mock('../../../src/components/HandsSummary', () => ({
 // ── ヘルパー ─────────────────────────────────────────────────────────────────
 
 function makePlayer(clientId: string, color: 'RED' | 'BLUE' | 'YELLOW' | 'GREEN', isHuman = true): ServerPlayer {
-  return {
-    clientId,
-    color,
-    lastActiveAt: new Date().toISOString(),
-    isHuman,
-  };
+  return { clientId, color, lastActiveAt: new Date().toISOString(), isHuman };
 }
 
 function makeSession(overrides: Partial<GameSession> = {}): GameSession {
@@ -75,10 +75,10 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
       Array(4).fill(null).map(() => [null, null, null] as [null, null, null])
     ) as GameSession['board'],
     hands: {
-      RED: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      BLUE: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      YELLOW: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      GREEN: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
+      RED: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      BLUE: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      YELLOW: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      GREEN: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
     },
     winner: null,
     winInfo: null,
@@ -101,111 +101,56 @@ describe('SpectatorView', () => {
   });
 
   it('spectator-view が表示される', () => {
-    const session = makeSession();
     const { getByTestId } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={makeSession()} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
     expect(getByTestId('spectator-view')).toBeTruthy();
   });
 
   it('ボードがスペクテーターモードで表示される', () => {
-    const session = makeSession();
     const { getByTestId } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={makeSession()} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
     expect(getByTestId('mock-board')).toBeTruthy();
   });
 
   it('HandsSummary が表示される', () => {
-    const session = makeSession();
     const { getByTestId } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={makeSession()} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
     expect(getByTestId('mock-hands-summary')).toBeTruthy();
   });
 
   it('waitQueue に clientId があるときキュー位置テキストが表示される', () => {
-    const session = makeSession({
-      waitQueue: ['spectator-1'],
-    });
+    const session = makeSession({ waitQueue: ['spectator-1'] });
     const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    // t.queuePos(1) = '#1' がテキストノードとして分割されて表示されるため exact: false で確認
     expect(getByText('#1', { exact: false })).toBeTruthy();
   });
 
   it('キュー位置 1 のとき youreNext テキストが表示される', () => {
-    const session = makeSession({
-      waitQueue: ['spectator-1'],
-    });
+    const session = makeSession({ waitQueue: ['spectator-1'] });
     const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    // "You're next" が含まれるテキストを確認
     expect(getByText("You're next", { exact: false })).toBeTruthy();
   });
 
-  it('waitQueue に clientId がないとき Joining テキストが表示される', () => {
-    const session = makeSession({
-      waitQueue: [],
-    });
+  it('キュー位置が 2 以上のとき willJoinAuto テキストが表示される', () => {
+    const session = makeSession({ waitQueue: ['other-client', 'spectator-1'] });
     const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    expect(getByText('Joining...')).toBeTruthy();
+    expect(getByText('Will join auto', { exact: false })).toBeTruthy();
   });
 
-  it('leave ボタンを押すと onLeave が呼ばれる', () => {
-    const onLeave = jest.fn();
-    const session = makeSession();
+  it('waitQueue に clientId がないとき Joining テキストが表示される', () => {
+    const session = makeSession({ waitQueue: [] });
     const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={onLeave}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    fireEvent.press(getByText('Leave'));
-    expect(onLeave).toHaveBeenCalledTimes(1);
+    expect(getByText('Joining...')).toBeTruthy();
   });
 
   it('ポーリングで clientId が players に現れると onJoined が呼ばれる', async () => {
@@ -220,25 +165,13 @@ describe('SpectatorView', () => {
     });
 
     const { rerender } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={initialSession}
-        onJoined={onJoined}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={initialSession} onJoined={onJoined} onLeave={jest.fn()} />,
     );
 
     mockPolledSession = promotedSession;
     await act(async () => {
       rerender(
-        <SpectatorView
-          gameId="g1"
-          clientId="spectator-1"
-          session={initialSession}
-          onJoined={onJoined}
-          onLeave={jest.fn()}
-        />,
+        <SpectatorView gameId="g1" clientId="spectator-1" session={initialSession} onJoined={onJoined} onLeave={jest.fn()} />,
       );
     });
 
@@ -248,53 +181,29 @@ describe('SpectatorView', () => {
   });
 
   it('winner がいるとき勝利テキストが表示される', () => {
-    const session = makeSession({
-      winner: 'RED',
-      status: 'FINISHED',
-    });
+    const session = makeSession({ winner: 'RED', status: 'FINISHED' });
     const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
     expect(getByText('Player RED WINS!')).toBeTruthy();
   });
 
-  it('ルームコードがヘッダーに表示される', () => {
+  it('マウント時に setLiveRoomCode がルームコードで呼ばれる', () => {
+    const { setLiveRoomCode } = require('../../../src/online/activeGame');
     const session = makeSession({ roomCode: 'XYZ999' });
-    const { getByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+    render(
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    expect(getByText('#XYZ999')).toBeTruthy();
+    expect(setLiveRoomCode).toHaveBeenCalledWith('XYZ999');
   });
 
-  it('セッションが null のとき Loading インジケーターが表示される', () => {
-    // usePolling が null を返すがinitialSessionも渡さない場合をシミュレート
-    // initialSession は必須だが、実際には session = polledSession ?? initialSession なので
-    // polledSession = null のときは initialSession が使われる
-    // initialSession の board が null のセッションは作れないので
-    // 代わりに ローディング状態は polledSession=null かつ初期sessionがない状況
-    // ここでは Loading テキストが表示されないケース（sessionあり）を確認
-    const session = makeSession();
-    const { queryByText } = render(
-      <SpectatorView
-        gameId="g1"
-        clientId="spectator-1"
-        session={session}
-        onJoined={jest.fn()}
-        onLeave={jest.fn()}
-      />,
+  it('マウント時に setLivePlayerCount がプレイヤー数で呼ばれる', () => {
+    const { setLivePlayerCount } = require('../../../src/online/activeGame');
+    const session = makeSession({ waitQueue: ['spectator-1'] });
+    render(
+      <SpectatorView gameId="g1" clientId="spectator-1" session={session} onJoined={jest.fn()} onLeave={jest.fn()} />,
     );
-    expect(queryByText('Loading...')).toBeNull();
+    // players 2人 + waitQueue 1人 = 3
+    expect(setLivePlayerCount).toHaveBeenCalledWith(3);
   });
 });
