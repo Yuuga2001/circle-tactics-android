@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import PlayerHand from '../../../src/components/PlayerHand';
 import { HandState } from '../../../src/types';
 
-const fullHand: HandState = { SMALL: 2, MEDIUM: 2, LARGE: 2 };
+const fullHand: HandState = { SMALL: 4, MEDIUM: 4, LARGE: 4 };
 const emptyHand: HandState = { SMALL: 0, MEDIUM: 0, LARGE: 0 };
 const partialHand: HandState = { SMALL: 0, MEDIUM: 1, LARGE: 2 };
 

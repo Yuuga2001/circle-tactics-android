@@ -144,10 +144,10 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
       Array(4).fill(null).map(() => [null, null, null] as [null, null, null])
     ) as GameSession['board'],
     hands: {
-      RED: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      BLUE: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      YELLOW: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
-      GREEN: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
+      RED: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      BLUE: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      YELLOW: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
+      GREEN: { SMALL: 4, MEDIUM: 4, LARGE: 4 },
     },
     winner: null,
     winInfo: null,
