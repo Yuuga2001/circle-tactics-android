@@ -530,4 +530,172 @@ describe('OnlineGame', () => {
     // FINISHED 状態なので confirm ダイアログをスキップして即 onLeave
     expect(onLeave).toHaveBeenCalledTimes(1);
   });
+
+  // ── TimerBadge: isOwn / 秒数ブランチ ─────────────────────────────────────
+
+  // board に駒を1つ置いて shouldSkipRoulette=true → 即 playing フェーズになるヘルパー
+  function makePlayingSession(overrides: Partial<GameSession> = {}): GameSession {
+    const boardWithPiece = Array(4).fill(null).map(() =>
+      Array(4).fill(null).map(() => [null, null, null] as [null, null, null])
+    ) as GameSession['board'];
+    boardWithPiece[0][0][0] = { player: 'RED', size: 'SMALL' };
+    return makeSession({ board: boardWithPiece, ...overrides });
+  }
+
+  it('自分のターン・残り 30s → timer-own が表示される', () => {
+    // currentPlayer=RED, clientId=client-host(RED) → isMyTurn=true
+    // currentTurnStartedAt=now → elapsed≈0 → 30s > 10 → timer-own
+    const session = makePlayingSession({
+      currentPlayer: 'RED',
+      currentTurnStartedAt: new Date().toISOString(),
+    });
+    const { getByTestId, queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(getByTestId('timer-own')).toBeTruthy();
+    expect(queryByTestId('timer-other')).toBeNull();
+    expect(queryByTestId('timer-own-urgent')).toBeNull();
+    expect(queryByTestId('timer-own-critical')).toBeNull();
+  });
+
+  it('自分のターン・残り 9s → timer-own-urgent が表示される', () => {
+    // elapsed=21000ms → ceil((30000-21000)/1000)=9 → ≤10 かつ >5 → timer-own-urgent
+    const session = makePlayingSession({
+      currentPlayer: 'RED',
+      currentTurnStartedAt: new Date(Date.now() - 21000).toISOString(),
+    });
+    const { getByTestId, queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(getByTestId('timer-own-urgent')).toBeTruthy();
+    expect(queryByTestId('timer-own')).toBeNull();
+    expect(queryByTestId('timer-own-critical')).toBeNull();
+    expect(queryByTestId('timer-other')).toBeNull();
+  });
+
+  it('自分のターン・残り 4s → timer-own-critical が表示される', () => {
+    // elapsed=26000ms → ceil((30000-26000)/1000)=4 → ≤5 → timer-own-critical
+    const session = makePlayingSession({
+      currentPlayer: 'RED',
+      currentTurnStartedAt: new Date(Date.now() - 26000).toISOString(),
+    });
+    const { getByTestId, queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(getByTestId('timer-own-critical')).toBeTruthy();
+    expect(queryByTestId('timer-own')).toBeNull();
+    expect(queryByTestId('timer-own-urgent')).toBeNull();
+    expect(queryByTestId('timer-other')).toBeNull();
+  });
+
+  it('他のプレイヤーのターン → timer-other が表示され timer-own 系は存在しない', () => {
+    // currentPlayer=BLUE, clientId=client-host(RED) → isMyTurn=false → timer-other
+    const session = makePlayingSession({
+      currentPlayer: 'BLUE',
+      currentTurnStartedAt: new Date().toISOString(),
+      players: [
+        { clientId: 'client-host', color: 'RED', lastActiveAt: new Date().toISOString(), isHuman: true },
+        { clientId: 'client-2', color: 'BLUE', lastActiveAt: new Date().toISOString(), isHuman: true },
+      ],
+    });
+    const { getByTestId, queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(getByTestId('timer-other')).toBeTruthy();
+    expect(queryByTestId('timer-own')).toBeNull();
+    expect(queryByTestId('timer-own-urgent')).toBeNull();
+    expect(queryByTestId('timer-own-critical')).toBeNull();
+  });
+
+  it('winner がある場合はタイマーが表示されない', () => {
+    const session = makePlayingSession({
+      winner: 'RED',
+      currentTurnStartedAt: new Date().toISOString(),
+    });
+    const { queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(queryByTestId('timer-own')).toBeNull();
+    expect(queryByTestId('timer-own-urgent')).toBeNull();
+    expect(queryByTestId('timer-own-critical')).toBeNull();
+    expect(queryByTestId('timer-other')).toBeNull();
+  });
+
+  it('AI プレイヤーのターン（isHuman=false）はタイマーが表示されない', () => {
+    // currentPlayer=BLUE, BLUE は isHuman=false → turnSecondsLeft=null
+    const session = makePlayingSession({
+      currentPlayer: 'BLUE',
+      currentTurnStartedAt: new Date().toISOString(),
+      players: [
+        { clientId: 'client-host', color: 'RED', lastActiveAt: new Date().toISOString(), isHuman: true },
+        { clientId: 'client-2', color: 'BLUE', lastActiveAt: new Date().toISOString(), isHuman: false },
+      ],
+    });
+    const { queryByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    expect(queryByTestId('timer-own')).toBeNull();
+    expect(queryByTestId('timer-own-urgent')).toBeNull();
+    expect(queryByTestId('timer-own-critical')).toBeNull();
+    expect(queryByTestId('timer-other')).toBeNull();
+  });
+
+  it('timer-other に表示される秒数テキストが正しい', () => {
+    // elapsed=21000ms → 9s 表示
+    const session = makePlayingSession({
+      currentPlayer: 'BLUE',
+      currentTurnStartedAt: new Date(Date.now() - 21000).toISOString(),
+      players: [
+        { clientId: 'client-host', color: 'RED', lastActiveAt: new Date().toISOString(), isHuman: true },
+        { clientId: 'client-2', color: 'BLUE', lastActiveAt: new Date().toISOString(), isHuman: true },
+      ],
+    });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    const timerEl = getByTestId('timer-other');
+    expect(timerEl.props.children).toEqual([9, 's']);
+  });
 });

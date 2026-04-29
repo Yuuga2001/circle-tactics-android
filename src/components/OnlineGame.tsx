@@ -78,13 +78,14 @@ const TimerBadge: React.FC<{ seconds: number; isOwn: boolean }> = ({ seconds, is
 
   if (!isOwn) {
     return (
-      <Text style={styles.timerTextOther}>{seconds}s</Text>
+      <Text testID="timer-other" style={styles.timerTextOther}>{seconds}s</Text>
     );
   }
 
   return (
     <Animated.View style={animStyle}>
       <Text
+        testID={isCritical ? 'timer-own-critical' : seconds <= 10 ? 'timer-own-urgent' : 'timer-own'}
         style={[
           styles.timerText,
           seconds <= 10 && styles.timerUrgent,
