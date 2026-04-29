@@ -98,4 +98,23 @@ describe('Board', () => {
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
+
+  it('onCellLayout が指定されたとき onLayout イベントで呼ばれる', () => {
+    const onCellLayout = jest.fn();
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} onCellLayout={onCellLayout} />
+    );
+    fireEvent(getByTestId('cell-0-0'), 'layout', {
+      nativeEvent: { layout: { x: 10, y: 20, width: 72, height: 72 } },
+    });
+    expect(onCellLayout).toHaveBeenCalledWith(0, 0, 10, 20, 72, 72);
+  });
+
+  it('onBoardLayout が指定されたとき Board がマウントされる', () => {
+    const onBoardLayout = jest.fn();
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} onBoardLayout={onBoardLayout} />
+    );
+    expect(getByTestId('cell-0-0')).toBeTruthy();
+  });
 });

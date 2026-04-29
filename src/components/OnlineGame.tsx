@@ -5,7 +5,7 @@ import { api, friendlyError } from '../online/api';
 import { GameSession } from '../online/types';
 import { usePolling } from '../online/usePolling';
 import { useHeartbeat } from '../online/useHeartbeat';
-import { clearActiveGame, saveActiveGame } from '../online/activeGame';
+import { clearActiveGame, saveActiveGame, setLiveRoomCode } from '../online/activeGame';
 import { useLang } from '../i18n';
 import { useGameSounds } from '../hooks/useGameSounds';
 import BoardComponent from './Board';
@@ -17,7 +17,7 @@ import Confetti from './Confetti';
 import ConfirmDialog from './ConfirmDialog';
 import ScreenContainer from './ui/ScreenContainer';
 import Button from './ui/Button';
-import { useBoardDrag } from './useBoardDrag';
+import { useBoardDrag, BoardLayout } from './useBoardDrag';
 import {
   COLORS,
   FONT_FAMILY,
@@ -149,13 +149,17 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     }
   };
 
+  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
+  const boardRemeasureRef = useRef<(() => void) | null>(null);
+
   const drag = useBoardDrag({
     player: current.currentPlayer,
     hand: current.hands[current.currentPlayer],
     enabled: isMyTurn && phase === 'playing',
     onSelectSize: handleSelectSize,
     onPlace: handleCellClick,
-    boardLayout: null,
+    boardLayout,
+    remeasureBoard: () => boardRemeasureRef.current?.(),
   });
 
   const handleRestart = async () => {
@@ -180,6 +184,11 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   useEffect(() => {
     saveActiveGame({ gameId, roomCode: current.roomCode, color: myColor ?? undefined });
   }, [gameId, current.roomCode, myColor]);
+
+  useEffect(() => {
+    setLiveRoomCode(current.roomCode ?? null);
+    return () => setLiveRoomCode(null);
+  }, [current.roomCode]);
 
   useEffect(() => {
     if (current.status === 'FINISHED') clearActiveGame();
@@ -217,6 +226,10 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   const elapsedSinceActivity = currentPlayerEntry?.isHuman
     ? now - new Date(currentPlayerEntry.lastActiveAt).getTime()
     : 0;
+  const turnSecondsLeft =
+    phase === 'playing' && !current.winner && currentPlayerEntry?.isHuman
+      ? Math.max(0, Math.ceil((AI_TAKEOVER_MS - elapsedSinceActivity) / 1000))
+      : null;
   const takeoverSecondsLeft =
     currentPlayerEntry?.isHuman && elapsedSinceActivity > AI_TAKEOVER_MS / 2
       ? Math.max(0, Math.ceil((AI_TAKEOVER_MS - elapsedSinceActivity) / 1000))
@@ -272,12 +285,12 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     <ScreenContainer victoryOverlay={victoryOverlay}>
       {current.winner && (current.winner as string) !== 'DRAW' && <Confetti />}
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>CircleTactics</Text>
-          {!!current.roomCode && <Text style={styles.roomCode}>#{current.roomCode}</Text>}
-        </View>
-
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScrollEndDrag={() => boardRemeasureRef.current?.()}
+        onMomentumScrollEnd={() => boardRemeasureRef.current?.()}
+      >
         <HandsSummary
           hands={current.hands}
           players={current.turnOrder}
@@ -294,6 +307,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
             winningPlayer={current.winInfo?.player ?? null}
             validCells={validCells}
             dragOverCell={drag.hoverCell}
+            onBoardLayout={setBoardLayout}
+            remeasureRef={boardRemeasureRef}
           />
           {phase === 'announcing' && (
             <AnnounceOverlay
@@ -320,7 +335,14 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
             </View>
           ) : (
             <View style={styles.statusLine}>
-              <Text style={styles.turnText}>{turnText}</Text>
+              <View style={styles.turnRow}>
+                <Text style={styles.turnText}>{turnText}</Text>
+                {turnSecondsLeft !== null && (
+                  <Text style={[styles.timerText, turnSecondsLeft <= 10 && styles.timerUrgent]}>
+                    {turnSecondsLeft}s
+                  </Text>
+                )}
+              </View>
               {phase === 'playing' && takeoverSecondsLeft !== null && (
                 <Text style={styles.takeoverWarning}>
                   {t.disconnected(current.currentPlayer, takeoverSecondsLeft)}
@@ -341,6 +363,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
               variant="full"
               interactive={isMyTurn && phase === 'playing'}
               draggingSize={drag.draggingSize}
+              bindPiecePointerDown={drag.bindPiecePointerDown}
               label={
                 phase !== 'playing'
                   ? ' '
@@ -352,17 +375,15 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
           </View>
         )}
 
-        {current.winner ? (
+        {current.winner && (
           <View style={styles.victoryActions}>
             <Button title={t.playAgain} variant="header" onPress={handleRestart} testID="online-play-again-btn" />
             <Button title={t.leave} variant="header" onPress={handleLeave} testID="online-leave-btn" />
           </View>
-        ) : (
-          <View style={styles.leaveOnlineWrap}>
-            <Button title={t.leaveOnline} variant="ghost" onPress={handleLeave} testID="online-leave-btn" />
-          </View>
         )}
       </ScrollView>
+
+      {drag.ghost}
 
       {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
 
@@ -383,33 +404,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 8,
+    paddingTop: 56,
     gap: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    paddingTop: 4,
-    paddingBottom: 4,
-  },
-  title: {
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.titleSm,
-    color: COLORS.boardFrame,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255,255,255,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  roomCode: {
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: 12,
-    color: COLORS.boardFrame,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    overflow: 'hidden',
   },
   boardArea: {
     width: '100%',
@@ -427,11 +423,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  turnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   turnText: {
     fontFamily: FONT_FAMILY.bold,
     fontSize: FONT_SIZE.status,
     color: COLORS.boardFrame,
     textAlign: 'center',
+  },
+  timerText: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.body,
+    color: COLORS.boardFrame,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    minWidth: 44,
+    textAlign: 'center',
+  },
+  timerUrgent: {
+    color: '#fff',
+    backgroundColor: PLAYER_BORDER_COLORS.RED,
   },
   takeoverWarning: {
     fontFamily: FONT_FAMILY.bold,
@@ -464,13 +480,12 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
   },
-  activeHandWrapper: { alignItems: 'center' },
+  activeHandWrapper: { alignItems: 'center', paddingBottom: 8 },
   victoryActions: {
     flexDirection: 'row',
     gap: 12,
     justifyContent: 'center',
   },
-  leaveOnlineWrap: { alignItems: 'center', marginTop: 4 },
 });
 
 export default OnlineGame;

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEY = 'circletactics.activeGame';
@@ -41,4 +42,24 @@ export async function clearActiveGame(): Promise<void> {
   } catch {
     // noop
   }
+}
+
+// ── Live room code (in-memory pub/sub for AppChrome) ─────────────────────────
+
+let _liveRoomCode: string | null = null;
+const _roomCodeListeners = new Set<(c: string | null) => void>();
+
+export function setLiveRoomCode(code: string | null): void {
+  _liveRoomCode = code;
+  _roomCodeListeners.forEach((fn) => fn(code));
+}
+
+export function useLiveRoomCode(): string | null {
+  const [code, setCode] = useState<string | null>(_liveRoomCode);
+  useEffect(() => {
+    setCode(_liveRoomCode);
+    _roomCodeListeners.add(setCode);
+    return () => { _roomCodeListeners.delete(setCode); };
+  }, []);
+  return code;
 }

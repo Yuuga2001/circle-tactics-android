@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
 import MenuButton, { MenuMode } from './MenuButton';
 import { api } from '../online/api';
-import { clearActiveGame } from '../online/activeGame';
+import { clearActiveGame, useLiveRoomCode } from '../online/activeGame';
 import { getClientId } from '../online/clientId';
 import { COLORS, FONT_FAMILY, FONT_SIZE } from '../styles/theme';
 
@@ -21,6 +21,7 @@ const AppChrome: React.FC = () => {
   else if (top === 'online' && second === 'playing') mode = 'online';
 
   const isPlaying = mode === 'local' || mode === 'online';
+  const roomCode = useLiveRoomCode();
 
   const goTitle = async () => {
     if (mode === 'online') {
@@ -39,6 +40,9 @@ const AppChrome: React.FC = () => {
     <View style={styles.overlay} pointerEvents="box-none">
       <View style={[styles.left, { top: topOffset }]} pointerEvents="box-none">
         <Text style={styles.appTitle}>CircleTactics</Text>
+        {!!roomCode && (
+          <Text style={styles.roomCodeBadge}>#{roomCode}</Text>
+        )}
       </View>
       <View style={[styles.right, { top: topOffset }]} pointerEvents="box-none">
         <MenuButton mode={mode} onTitle={isPlaying ? goTitle : undefined} />
@@ -59,6 +63,9 @@ const styles = StyleSheet.create({
   left: {
     position: 'absolute',
     left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   right: {
     position: 'absolute',
@@ -70,6 +77,17 @@ const styles = StyleSheet.create({
     color: COLORS.boardFrame,
     letterSpacing: 1,
     paddingVertical: 7,
+  },
+  roomCodeBadge: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 11,
+    color: COLORS.boardFrame,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    overflow: 'hidden',
+    letterSpacing: 1,
   },
 });
 

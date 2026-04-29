@@ -84,12 +84,84 @@ describe('friendlyError', () => {
     expect(friendlyError(err)).toBe('Room not found');
   });
 
+  it('ApiError でコードが不明な場合はコードをそのまま返す', () => {
+    const err = new ApiError(400, 'UNKNOWN_CODE');
+    expect(friendlyError(err)).toBe('UNKNOWN_CODE');
+  });
+
   it('Error インスタンスはメッセージを返す', () => {
     const err = new Error('Something bad');
     expect(friendlyError(err)).toBe('Something bad');
   });
 
+  it('Error のメッセージが ERROR_MESSAGES に一致するとき翻訳する', () => {
+    const err = new Error('NOT_FOUND');
+    expect(friendlyError(err)).toBe('Room not found');
+  });
+
   it('不明な型はデフォルトメッセージを返す', () => {
     expect(friendlyError(null)).toBe('Something went wrong');
+  });
+
+  it('api.join は previousColor を含めて呼び出す', async () => {
+    mockFetch(200, { player: { color: 'RED' }, session: {} });
+    await api.join('g1', 'client-1', 'RED');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/join'),
+      expect.objectContaining({
+        body: expect.stringContaining('"previousColor":"RED"'),
+      }),
+    );
+  });
+
+  it('api.selectSize は POST /select-size を呼び出す', async () => {
+    mockFetch(200, { gameId: 'g1' });
+    await api.selectSize('g1', 'client-1', 'LARGE');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/select-size'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('api.restart は POST /restart を呼び出す', async () => {
+    mockFetch(200, { gameId: 'g1' });
+    await api.restart('g1', 'client-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/restart'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('api.getByRoomCode は GET /game/by-code/:code を呼び出す', async () => {
+    mockFetch(200, { gameId: 'g1' });
+    await api.getByRoomCode('123456');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/by-code/123456'),
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
+  it('api.heartbeat は POST /heartbeat を呼び出す', async () => {
+    mockFetch(200, { ok: true });
+    await api.heartbeat('g1', 'client-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/heartbeat'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('api.start は POST /start を呼び出す', async () => {
+    mockFetch(200, { gameId: 'g1', status: 'PLAYING' });
+    await api.start('g1', 'client-1', 2);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/start'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('空ボディのレスポンスでも ApiError を throw する', async () => {
+    const res = { ok: false, status: 500, json: jest.fn().mockRejectedValue(new SyntaxError()) };
+    global.fetch = jest.fn().mockResolvedValue(res) as jest.Mock;
+    await expect(api.getGame('g1')).rejects.toThrow(ApiError);
   });
 });

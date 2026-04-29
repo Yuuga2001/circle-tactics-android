@@ -4,14 +4,16 @@ import type { CellState } from '../../src/types';
 export function makeMockSession(overrides: Partial<GameSession> = {}): GameSession {
   return {
     gameId: 'game-123',
+    roomCode: '123456',
     status: 'WAITING',
+    hostClientId: 'client-host',
     players: [
       { clientId: 'client-host', color: 'RED', lastActiveAt: new Date().toISOString(), isHuman: true },
     ],
-    spectators: [],
+    humanCount: 1,
     board: Array(4).fill(null).map(() =>
-      Array(4).fill(null).map(() => [null, null, null] as CellState)
-    ),
+      Array(4).fill(null).map(() => [null, null, null] as CellState),
+    ) as GameSession['board'],
     hands: {
       RED: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
       BLUE: { SMALL: 5, MEDIUM: 5, LARGE: 5 },
@@ -20,12 +22,15 @@ export function makeMockSession(overrides: Partial<GameSession> = {}): GameSessi
     },
     currentPlayer: 'RED',
     selectedSize: null,
+    turnOrder: ['RED', 'BLUE', 'YELLOW', 'GREEN'],
     winner: null,
     winInfo: null,
     startedAt: null,
-    hostClientId: 'client-host',
-    queue: [],
-    turnStartedAt: null,
+    currentTurnStartedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    waitQueue: [],
+    version: 1,
     ...overrides,
   };
 }

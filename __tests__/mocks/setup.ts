@@ -6,6 +6,27 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // expo-av mock
 jest.mock('expo-av', () => require('./expoAv').default);
 
+// expo-audio mock
+jest.mock('expo-audio', () => {
+  const mockPlayer = {
+    play: jest.fn(),
+    pause: jest.fn(),
+    remove: jest.fn(),
+    seekTo: jest.fn(),
+    volume: 1,
+    loop: false,
+    currentTime: 0,
+    duration: 0,
+    isPlaying: false,
+    isLoaded: true,
+    addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  };
+  return {
+    createAudioPlayer: jest.fn().mockReturnValue(mockPlayer),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  };
+});
+
 // expo-splash-screen mock
 jest.mock('expo-splash-screen', () => ({
   preventAutoHideAsync: jest.fn().mockResolvedValue(undefined),

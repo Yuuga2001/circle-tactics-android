@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import JoinScreen from '../../src/components/JoinScreen';
 import { saveActiveGame } from '../../src/online/activeGame';
@@ -8,14 +8,15 @@ import type { GameSession } from '../../src/online/types';
 export default function JoinRoute() {
   const router = useRouter();
   const { code } = useLocalSearchParams<{ code?: string }>();
-  const clientIdRef = useRef<string>('');
+  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
-    getClientId().then((id) => { clientIdRef.current = id; });
+    getClientId().then(setClientId);
   }, []);
 
   const handleJoined = async (gameId: string, session: GameSession) => {
-    const player = session.players.find((p) => p.clientId === clientIdRef.current);
+    const id = clientId ?? '';
+    const player = session.players.find((p) => p.clientId === id);
     await saveActiveGame({
       gameId,
       roomCode: session.roomCode ?? '',
@@ -25,15 +26,17 @@ export default function JoinRoute() {
       pathname: '/online/waiting',
       params: {
         gameId,
-        clientId: clientIdRef.current,
+        clientId: id,
         session: JSON.stringify(session),
       },
     });
   };
 
+  if (clientId === null) return null;
+
   return (
     <JoinScreen
-      clientId={clientIdRef.current}
+      clientId={clientId}
       initialCode={code}
       onJoined={handleJoined}
       onBack={() => router.back()}

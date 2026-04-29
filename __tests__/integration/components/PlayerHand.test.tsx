@@ -137,4 +137,20 @@ describe('PlayerHand', () => {
     expect(getByTestId('size-btn-MEDIUM').props.accessibilityState?.disabled).toBe(true);
     expect(getByTestId('size-btn-LARGE').props.accessibilityState?.disabled).toBe(true);
   });
+
+  it('bindPiecePointerDown が渡されたとき drag ハンドラー付きビューが表示される', () => {
+    const onSelectSize = jest.fn();
+    const bindPiecePointerDown = jest.fn().mockReturnValue({ onTouchStart: jest.fn() });
+    const { getByTestId } = render(
+      <PlayerHand
+        player="RED"
+        hand={fullHand}
+        selectedSize={null}
+        onSelectSize={onSelectSize}
+        interactive
+        bindPiecePointerDown={bindPiecePointerDown}
+      />
+    );
+    expect(getByTestId('size-btn-SMALL')).toBeTruthy();
+  });
 });

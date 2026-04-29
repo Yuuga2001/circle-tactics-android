@@ -273,4 +273,67 @@ describe('HostScreen', () => {
 
     expect(await findByText('Network error')).toBeTruthy();
   });
+
+  it('copy-code-btn を押すとクリップボードにコピーされる', async () => {
+    const { Clipboard } = require('expo-clipboard');
+    const { getByTestId } = render(
+      <HostScreen
+        gameId=""
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onBack={jest.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('copy-code-btn')).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('copy-code-btn'));
+    });
+
+    const { setStringAsync } = require('expo-clipboard');
+    expect(setStringAsync).toHaveBeenCalledWith('ABC123');
+  });
+
+  it('プレイヤーが少ないとき AI シート数が表示される', async () => {
+    mockPolledSession = makeSession({ status: 'WAITING', players: [
+      { clientId: 'client-1', color: 'RED', lastActiveAt: new Date().toISOString(), isHuman: true },
+    ] });
+
+    const { getByText } = render(
+      <HostScreen
+        gameId="existing-game"
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onBack={jest.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByText('AI: 3')).toBeTruthy();
+    });
+  });
+
+  it('api.start が失敗するとエラーが表示される', async () => {
+    mockStart.mockRejectedValue(new Error('Start failed'));
+
+    const { getByTestId, findByText } = render(
+      <HostScreen
+        gameId=""
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onBack={jest.fn()}
+      />,
+    );
+
+    await act(async () => {});
+
+    await act(async () => {
+      fireEvent.press(getByTestId('start-game-btn'));
+    });
+
+    expect(await findByText('Start failed')).toBeTruthy();
+  });
 });

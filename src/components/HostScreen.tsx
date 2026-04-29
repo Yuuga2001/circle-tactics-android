@@ -124,7 +124,7 @@ const HostScreen: React.FC<HostScreenProps> = ({ gameId: initialGameId, clientId
           {!!roomCode && (
             <View style={hostStyles.qrWrap}>
               <View style={hostStyles.qrBox}>
-                <QRCode value={roomCode} size={180} backgroundColor="#fff" />
+                <QRCode value={`https://circle-tactics.riverapp.jp/?room=${roomCode}`} size={180} backgroundColor="#fff" />
               </View>
             </View>
           )}

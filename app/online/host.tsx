@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import HostScreen from '../../src/components/HostScreen';
 import { saveActiveGame } from '../../src/online/activeGame';
@@ -7,14 +7,15 @@ import type { GameSession } from '../../src/online/types';
 
 export default function HostRoute() {
   const router = useRouter();
-  const clientIdRef = useRef<string>('');
+  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
-    getClientId().then((id) => { clientIdRef.current = id; });
+    getClientId().then(setClientId);
   }, []);
 
   const handleGameStart = async (session: GameSession) => {
-    const player = session.players.find((p) => p.clientId === clientIdRef.current);
+    const id = clientId ?? '';
+    const player = session.players.find((p) => p.clientId === id);
     await saveActiveGame({
       gameId: session.gameId,
       roomCode: session.roomCode ?? '',
@@ -22,14 +23,15 @@ export default function HostRoute() {
     });
     router.replace({
       pathname: '/online/playing',
-      params: { gameId: session.gameId, clientId: clientIdRef.current },
+      params: { gameId: session.gameId, clientId: id, session: JSON.stringify(session) },
     });
   };
 
+  if (clientId === null) return null;
+
   return (
     <HostScreen
-      gameId=""
-      clientId={clientIdRef.current}
+      clientId={clientId}
       onGameStart={handleGameStart}
       onBack={() => router.back()}
     />

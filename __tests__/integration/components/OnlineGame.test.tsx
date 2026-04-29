@@ -31,6 +31,8 @@ jest.mock('../../../src/online/api', () => ({
 jest.mock('../../../src/online/activeGame', () => ({
   saveActiveGame: jest.fn(),
   clearActiveGame: jest.fn(),
+  setLiveRoomCode: jest.fn(),
+  useLiveRoomCode: jest.fn().mockReturnValue(null),
 }));
 
 jest.mock('../../../src/i18n/index', () => ({
@@ -220,8 +222,8 @@ describe('OnlineGame', () => {
     expect(queryByTestId('online-victory-text')).toBeNull();
   });
 
-  it('online-leave-btn を押すと確認ダイアログが表示される', () => {
-    const session = makeSession();
+  it('online-leave-btn (勝利後) を押すと確認ダイアログが表示される', () => {
+    const session = makeSession({ winner: 'BLUE', status: 'PLAYING' });
     const { getByTestId, getByText } = render(
       <OnlineGame
         gameId="game-123"
@@ -238,7 +240,7 @@ describe('OnlineGame', () => {
 
   it('確認ダイアログで OK を押すと onLeave が呼ばれる', () => {
     const onLeave = jest.fn();
-    const session = makeSession();
+    const session = makeSession({ winner: 'BLUE', status: 'PLAYING' });
     const { getByTestId, getByText } = render(
       <OnlineGame
         gameId="game-123"

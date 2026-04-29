@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppChrome from '../../../src/components/AppChrome';
 
@@ -31,6 +31,8 @@ jest.mock('../../../src/online/api', () => ({
 
 jest.mock('../../../src/online/activeGame', () => ({
   clearActiveGame: jest.fn().mockResolvedValue(undefined),
+  useLiveRoomCode: jest.fn().mockReturnValue(null),
+  setLiveRoomCode: jest.fn(),
 }));
 
 jest.mock('../../../src/online/clientId', () => ({
@@ -40,12 +42,22 @@ jest.mock('../../../src/online/clientId', () => ({
 jest.mock('../../../src/i18n/index', () => ({
   useLang: () => ({
     lang: 'en',
+    isAuto: true,
     setLang: jest.fn(),
+    setAuto: jest.fn(),
     t: {
       bgmLabel: 'BGM',
       seLabel: 'SE',
       soundOn: 'ON',
       soundOff: 'OFF',
+      menuLabel: 'Menu',
+      titleBtn: 'Back to Title',
+      leaveOnline: 'Leave',
+      newGame: 'New Game',
+      confirmLeave: 'Leave and return to title?',
+      confirmLeaveOnline: 'Leave the room and return to title?',
+      cancel: 'Cancel',
+      ok: 'OK',
     },
   }),
   LANGUAGES: {
@@ -75,9 +87,9 @@ describe('AppChrome', () => {
     useSegments.mockReturnValue([]);
   });
 
-  it('LanguageSelector のトリガーが表示される', () => {
+  it('タイトル画面では CircleTactics テキストが表示される', () => {
     const { getByText } = renderWithSafeArea(<AppChrome />);
-    expect(getByText('Language')).toBeTruthy();
+    expect(getByText('CircleTactics')).toBeTruthy();
   });
 
   it('segments が空（タイトル画面）でも MenuButton は常時表示される', () => {
@@ -117,9 +129,26 @@ describe('AppChrome', () => {
     expect(queryByText('Language')).toBeNull();
   });
 
-  it('タイトル画面では左側に LanguageSelector が表示される', () => {
+  it('タイトル画面では左側に CircleTactics タイトルが表示される', () => {
     useSegments.mockReturnValue([]);
-    const { getByText } = renderWithSafeArea(<AppChrome />);
-    expect(getByText('Language')).toBeTruthy();
+    const { getByText, queryByText } = renderWithSafeArea(<AppChrome />);
+    expect(getByText('CircleTactics')).toBeTruthy();
+    expect(queryByText('Language')).toBeNull();
+  });
+
+  it('online/playing モードで Leave → OK で clearActiveGame と router.replace が呼ばれる', async () => {
+    const { clearActiveGame } = require('../../../src/online/activeGame');
+    const { useRouter } = require('expo-router');
+    const mockRouterReplace = jest.fn();
+    useRouter.mockReturnValue({ push: jest.fn(), replace: mockRouterReplace, back: jest.fn() });
+    useSegments.mockReturnValue(['online', 'playing']);
+    const { getByTestId, getByText } = renderWithSafeArea(<AppChrome />);
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    fireEvent.press(getByText('Leave'));
+    fireEvent.press(getByText('OK'));
+    await waitFor(() => {
+      expect(clearActiveGame).toHaveBeenCalled();
+    });
+    expect(mockRouterReplace).toHaveBeenCalledWith('/');
   });
 });

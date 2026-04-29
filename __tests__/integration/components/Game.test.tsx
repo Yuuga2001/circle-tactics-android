@@ -113,6 +113,7 @@ describe('Game component', () => {
     const { getByTestId } = render(<GameComponent state={state} dispatch={dispatch} />);
     act(() => { jest.runAllTimers(); });
     fireEvent.press(getByTestId('title-btn'));
+    act(() => { jest.runAllTimers(); });
     expect(dispatch).toHaveBeenCalledWith({ type: 'RETURN_TO_TITLE' });
   });
 
