@@ -56,8 +56,8 @@ function shouldSkipRoulette(s: GameSession): boolean {
   return false;
 }
 
-const TimerBadge: React.FC<{ seconds: number }> = ({ seconds }) => {
-  const isCritical = seconds <= 5;
+const TimerBadge: React.FC<{ seconds: number; isOwn: boolean }> = ({ seconds, isOwn }) => {
+  const isCritical = isOwn && seconds <= 5;
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -75,6 +75,12 @@ const TimerBadge: React.FC<{ seconds: number }> = ({ seconds }) => {
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  if (!isOwn) {
+    return (
+      <Text style={styles.timerTextOther}>{seconds}s</Text>
+    );
+  }
 
   return (
     <Animated.View style={animStyle}>
@@ -410,7 +416,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
               <View style={styles.turnRow}>
                 <Text style={styles.turnText}>{turnText}</Text>
                 {turnSecondsLeft !== null && (
-                  <TimerBadge seconds={turnSecondsLeft} />
+                  <TimerBadge seconds={turnSecondsLeft} isOwn={isMyTurn} />
                 )}
               </View>
               {phase === 'playing' && takeoverSecondsLeft !== null && (
@@ -515,6 +521,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     minWidth: 44,
     textAlign: 'center',
+  },
+  timerTextOther: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.hint,
+    color: COLORS.textMuted,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   timerUrgent: {
     color: '#fff',
