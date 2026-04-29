@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Modal, ScrollView, Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -114,6 +116,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
         <Pressable style={styles.backdrop} onPress={closePanel} testID="menu-close-btn">
           <Pressable onPress={(e) => e.stopPropagation()}>
             <Animated.View style={[styles.panel, SHADOWS.elevated, panelStyle]}>
+              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {!!onTitle && (
                 <Animated.View style={titleItem.style}>
                   <Pressable
@@ -185,6 +188,70 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                   </Pressable>
                 </Animated.View>
               </View>
+
+              <View style={styles.divider} />
+              {[
+                { label: t.aboutApp,      url: 'https://riverapp.jp/app-document/circletactics/about' },
+                { label: t.privacyPolicy, url: 'https://riverapp.jp/app-document/circletactics/privacy-policy' },
+                { label: t.termsOfService,url: 'https://riverapp.jp/app-document/circletactics/terms-of-service' },
+                { label: t.contactUs,     url: 'https://riverapp.jp/app-document/circletactics/contact' },
+              ].map(({ label, url }) => (
+                <Pressable
+                  key={url}
+                  onPress={() => { audioManager.play('tap'); Linking.openURL(url); }}
+                  style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+                >
+                  <Text style={styles.itemText}>{label}</Text>
+                </Pressable>
+              ))}
+
+              <View style={styles.divider} />
+              {[
+                { label: t.webVersion,   url: 'https://circle-tactics.riverapp.jp/' },
+                { label: t.appHomepage,  url: 'https://riverapp.jp/apps/circletactics' },
+                { label: t.writeReview,  url: 'market://details?id=jp.riverapp.circletactics' },
+              ].map(({ label, url }) => (
+                <Pressable
+                  key={url}
+                  onPress={() => {
+                    audioManager.play('tap');
+                    if (url.startsWith('market://')) {
+                      Linking.openURL(url).catch(() =>
+                        Linking.openURL('https://play.google.com/store/apps/details?id=jp.riverapp.circletactics')
+                      );
+                    } else {
+                      Linking.openURL(url);
+                    }
+                  }}
+                  style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+                >
+                  <Text style={styles.itemText}>{label}</Text>
+                </Pressable>
+              ))}
+
+              <View style={styles.divider} />
+              <Pressable
+                onPress={() => {
+                  audioManager.play('tap');
+                  setConfirmAction({
+                    message: t.confirmClearData,
+                    onConfirm: async () => {
+                      await AsyncStorage.clear().catch(() => {});
+                      closePanel();
+                    },
+                  });
+                }}
+                style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+              >
+                <Text style={[styles.itemText, styles.itemDanger]}>{t.clearLocalData}</Text>
+              </Pressable>
+
+              <View style={styles.divider} />
+              <View style={styles.versionRow}>
+                <Text style={styles.versionLabel}>{t.versionLabel}</Text>
+                <Text style={styles.versionValue}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+              </View>
+              </ScrollView>
             </Animated.View>
           </Pressable>
         </Pressable>
@@ -284,6 +351,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     minWidth: 220,
+    maxHeight: 480,
     borderWidth: 2,
     borderColor: COLORS.boardFrame,
   },
@@ -406,6 +474,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(141,110,99,0.2)',
     marginHorizontal: 8,
     marginVertical: 2,
+  },
+  itemDanger: {
+    color: '#c0392b',
+  },
+  versionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  versionLabel: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.body,
+    color: COLORS.textMuted,
+  },
+  versionValue: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.body,
+    color: COLORS.textMuted,
   },
 });
 

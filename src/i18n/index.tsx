@@ -126,6 +126,18 @@ export interface T {
   retryBtn: string;
   errorTitle: string;
   errorDesc: string;
+
+  // Menu - info & links
+  aboutApp: string;
+  privacyPolicy: string;
+  termsOfService: string;
+  contactUs: string;
+  webVersion: string;
+  appHomepage: string;
+  writeReview: string;
+  clearLocalData: string;
+  confirmClearData: string;
+  versionLabel: string;
 }
 
 const t: Record<LangCode, T> = {
@@ -212,6 +224,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Retry',
     errorTitle: 'Something went wrong',
     errorDesc: 'Please try again or restart the app.',
+    aboutApp: 'About This App',
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    contactUs: 'Contact',
+    webVersion: 'Play Web Version',
+    appHomepage: 'App Homepage',
+    writeReview: 'Write a Review',
+    clearLocalData: 'Clear Local Data',
+    confirmClearData: 'Delete all local data? This cannot be undone.',
+    versionLabel: 'Version',
   },
 
   ja: {
@@ -297,6 +319,16 @@ const t: Record<LangCode, T> = {
     retryBtn: '再試行',
     errorTitle: 'エラーが発生しました',
     errorDesc: 'もう一度お試しください。',
+    aboutApp: 'このアプリについて',
+    privacyPolicy: 'プライバシーポリシー',
+    termsOfService: '利用規約',
+    contactUs: 'お問い合わせ',
+    webVersion: 'Web版はこちら',
+    appHomepage: 'アプリホームページ',
+    writeReview: 'レビューを書く',
+    clearLocalData: 'ローカルデータを削除',
+    confirmClearData: 'ローカルデータをすべて削除しますか？この操作は元に戻せません。',
+    versionLabel: 'バージョン',
   },
 
   zh: {
@@ -382,6 +414,16 @@ const t: Record<LangCode, T> = {
     retryBtn: '重试',
     errorTitle: '发生错误',
     errorDesc: '请重试或重启应用程序。',
+    aboutApp: '关于本应用',
+    privacyPolicy: '隐私政策',
+    termsOfService: '服务条款',
+    contactUs: '联系我们',
+    webVersion: '前往Web版',
+    appHomepage: '应用主页',
+    writeReview: '写评价',
+    clearLocalData: '清除本地数据',
+    confirmClearData: '删除所有本地数据？此操作无法撤销。',
+    versionLabel: '版本',
   },
 
   'zh-TW': {
@@ -467,6 +509,16 @@ const t: Record<LangCode, T> = {
     retryBtn: '重試',
     errorTitle: '發生錯誤',
     errorDesc: '請重試或重啟應用程式。',
+    aboutApp: '關於本應用程式',
+    privacyPolicy: '隱私權政策',
+    termsOfService: '服務條款',
+    contactUs: '聯絡我們',
+    webVersion: '前往Web版',
+    appHomepage: '應用程式首頁',
+    writeReview: '撰寫評論',
+    clearLocalData: '清除本機資料',
+    confirmClearData: '刪除所有本機資料？此操作無法復原。',
+    versionLabel: '版本',
   },
 
   ko: {
@@ -552,6 +604,16 @@ const t: Record<LangCode, T> = {
     retryBtn: '재시도',
     errorTitle: '오류가 발생했습니다',
     errorDesc: '다시 시도하거나 앱을 재시작해 주세요.',
+    aboutApp: '이 앱 소개',
+    privacyPolicy: '개인정보 처리방침',
+    termsOfService: '이용약관',
+    contactUs: '문의하기',
+    webVersion: 'Web 버전 플레이',
+    appHomepage: '앱 홈페이지',
+    writeReview: '리뷰 작성',
+    clearLocalData: '로컬 데이터 삭제',
+    confirmClearData: '모든 로컬 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+    versionLabel: '버전',
   },
 
   es: {
@@ -637,6 +699,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Reintentar',
     errorTitle: 'Algo salió mal',
     errorDesc: 'Por favor inténtalo de nuevo o reinicia la aplicación.',
+    aboutApp: 'Acerca de esta app',
+    privacyPolicy: 'Política de privacidad',
+    termsOfService: 'Términos de servicio',
+    contactUs: 'Contacto',
+    webVersion: 'Jugar versión web',
+    appHomepage: 'Página de la app',
+    writeReview: 'Escribir reseña',
+    clearLocalData: 'Borrar datos locales',
+    confirmClearData: '¿Eliminar todos los datos locales? Esta acción no se puede deshacer.',
+    versionLabel: 'Versión',
   },
 
   fr: {
@@ -722,6 +794,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Réessayer',
     errorTitle: 'Une erreur est survenue',
     errorDesc: 'Veuillez réessayer ou redémarrer l\'application.',
+    aboutApp: 'À propos de cette app',
+    privacyPolicy: 'Politique de confidentialité',
+    termsOfService: 'Conditions d\'utilisation',
+    contactUs: 'Contact',
+    webVersion: 'Jouer en version web',
+    appHomepage: 'Page de l\'app',
+    writeReview: 'Écrire un avis',
+    clearLocalData: 'Effacer les données locales',
+    confirmClearData: 'Supprimer toutes les données locales ? Cette action est irréversible.',
+    versionLabel: 'Version',
   },
 
   de: {
@@ -807,6 +889,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Erneut versuchen',
     errorTitle: 'Ein Fehler ist aufgetreten',
     errorDesc: 'Bitte versuche es erneut oder starte die App neu.',
+    aboutApp: 'Über diese App',
+    privacyPolicy: 'Datenschutzrichtlinie',
+    termsOfService: 'Nutzungsbedingungen',
+    contactUs: 'Kontakt',
+    webVersion: 'Web-Version spielen',
+    appHomepage: 'App-Homepage',
+    writeReview: 'Rezension schreiben',
+    clearLocalData: 'Lokale Daten löschen',
+    confirmClearData: 'Alle lokalen Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
+    versionLabel: 'Version',
   },
 
   it: {
@@ -892,6 +984,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Riprova',
     errorTitle: 'Qualcosa è andato storto',
     errorDesc: 'Riprova o riavvia l\'app.',
+    aboutApp: 'Informazioni sull\'app',
+    privacyPolicy: 'Informativa sulla privacy',
+    termsOfService: 'Termini di servizio',
+    contactUs: 'Contattaci',
+    webVersion: 'Gioca versione web',
+    appHomepage: 'Homepage dell\'app',
+    writeReview: 'Scrivi una recensione',
+    clearLocalData: 'Cancella dati locali',
+    confirmClearData: 'Eliminare tutti i dati locali? Questa azione è irreversibile.',
+    versionLabel: 'Versione',
   },
 
   pt: {
@@ -977,6 +1079,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Tentar novamente',
     errorTitle: 'Algo deu errado',
     errorDesc: 'Por favor, tente novamente ou reinicie o app.',
+    aboutApp: 'Sobre este app',
+    privacyPolicy: 'Política de privacidade',
+    termsOfService: 'Termos de serviço',
+    contactUs: 'Contato',
+    webVersion: 'Jogar versão web',
+    appHomepage: 'Página do app',
+    writeReview: 'Escrever avaliação',
+    clearLocalData: 'Limpar dados locais',
+    confirmClearData: 'Excluir todos os dados locais? Esta ação não pode ser desfeita.',
+    versionLabel: 'Versão',
   },
 
   ru: {
@@ -1062,6 +1174,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Повторить',
     errorTitle: 'Что-то пошло не так',
     errorDesc: 'Пожалуйста, попробуйте ещё раз или перезапустите приложение.',
+    aboutApp: 'Об этом приложении',
+    privacyPolicy: 'Политика конфиденциальности',
+    termsOfService: 'Условия использования',
+    contactUs: 'Связаться с нами',
+    webVersion: 'Играть в веб-версию',
+    appHomepage: 'Страница приложения',
+    writeReview: 'Написать отзыв',
+    clearLocalData: 'Удалить локальные данные',
+    confirmClearData: 'Удалить все локальные данные? Это действие нельзя отменить.',
+    versionLabel: 'Версия',
   },
 
   ar: {
@@ -1147,6 +1269,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'إعادة المحاولة',
     errorTitle: 'حدث خطأ ما',
     errorDesc: 'يرجى المحاولة مرة أخرى أو إعادة تشغيل التطبيق.',
+    aboutApp: 'حول هذا التطبيق',
+    privacyPolicy: 'سياسة الخصوصية',
+    termsOfService: 'شروط الخدمة',
+    contactUs: 'اتصل بنا',
+    webVersion: 'العب النسخة الويب',
+    appHomepage: 'الصفحة الرئيسية للتطبيق',
+    writeReview: 'اكتب تقييمًا',
+    clearLocalData: 'حذف البيانات المحلية',
+    confirmClearData: 'هل تريد حذف جميع البيانات المحلية؟ لا يمكن التراجع عن هذا الإجراء.',
+    versionLabel: 'الإصدار',
   },
 
   hi: {
@@ -1232,6 +1364,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'पुनः प्रयास',
     errorTitle: 'कुछ गलत हो गया',
     errorDesc: 'कृपया पुनः प्रयास करें या ऐप पुनः आरंभ करें।',
+    aboutApp: 'इस ऐप के बारे में',
+    privacyPolicy: 'गोपनीयता नीति',
+    termsOfService: 'सेवा की शर्तें',
+    contactUs: 'संपर्क करें',
+    webVersion: 'वेब संस्करण खेलें',
+    appHomepage: 'ऐप होमपेज',
+    writeReview: 'समीक्षा लिखें',
+    clearLocalData: 'स्थानीय डेटा हटाएं',
+    confirmClearData: 'सभी स्थानीय डेटा हटाएं? यह क्रिया पूर्ववत नहीं की जा सकती।',
+    versionLabel: 'संस्करण',
   },
 
   tr: {
@@ -1317,6 +1459,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Yeniden dene',
     errorTitle: 'Bir şeyler ters gitti',
     errorDesc: 'Lütfen tekrar deneyin veya uygulamayı yeniden başlatın.',
+    aboutApp: 'Bu Uygulama Hakkında',
+    privacyPolicy: 'Gizlilik Politikası',
+    termsOfService: 'Kullanım Koşulları',
+    contactUs: 'İletişim',
+    webVersion: 'Web Sürümünü Oyna',
+    appHomepage: 'Uygulama Ana Sayfası',
+    writeReview: 'Yorum Yaz',
+    clearLocalData: 'Yerel Verileri Sil',
+    confirmClearData: 'Tüm yerel veriler silinsin mi? Bu işlem geri alınamaz.',
+    versionLabel: 'Sürüm',
   },
 
   id: {
@@ -1402,6 +1554,16 @@ const t: Record<LangCode, T> = {
     retryBtn: 'Coba lagi',
     errorTitle: 'Terjadi kesalahan',
     errorDesc: 'Silakan coba lagi atau mulai ulang aplikasi.',
+    aboutApp: 'Tentang Aplikasi Ini',
+    privacyPolicy: 'Kebijakan Privasi',
+    termsOfService: 'Ketentuan Layanan',
+    contactUs: 'Hubungi Kami',
+    webVersion: 'Main Versi Web',
+    appHomepage: 'Halaman Aplikasi',
+    writeReview: 'Tulis Ulasan',
+    clearLocalData: 'Hapus Data Lokal',
+    confirmClearData: 'Hapus semua data lokal? Tindakan ini tidak dapat dibatalkan.',
+    versionLabel: 'Versi',
   },
 };
 
