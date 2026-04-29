@@ -346,6 +346,55 @@ describe('OnlineGame', () => {
     expect(api.restart).toHaveBeenCalledWith('game-123', 'client-host');
   });
 
+  it('他のユーザーが Play Again を押した後（polling で startedAt 更新）自分にもルーレットが再生される', async () => {
+    const { usePolling } = require('../../../src/online/usePolling');
+
+    // 終了済みセッションでマウント
+    const finishedSession = makeSession({
+      status: 'FINISHED',
+      winner: 'RED',
+      startedAt: new Date(Date.now() - 60000).toISOString(),
+    });
+    const { getByText, rerender } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={finishedSession}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+
+    // polling で再開セッション（startedAt 更新・空盤面）が届く
+    const restartedSession = makeSession({
+      status: 'PLAYING',
+      winner: null,
+      startedAt: new Date().toISOString(),
+      currentPlayer: 'BLUE',
+    });
+    usePolling.mockReturnValue({
+      session: restartedSession,
+      error: null,
+      setSession: jest.fn(),
+    });
+
+    await act(async () => {
+      rerender(
+        <OnlineGame
+          gameId="game-123"
+          clientId="client-host"
+          initialSession={finishedSession}
+          onLeave={jest.fn()}
+          onDemoted={jest.fn()}
+        />,
+      );
+    });
+
+    // startedAt 変化を検知してルーレットフェーズに復帰している
+    expect(getByText('picking...')).toBeTruthy();
+  });
+
   it('clientId がプレイヤーリストに存在しないとき onDemoted が呼ばれる', async () => {
     // usePolling のモックを上書きして、clientId 不在のセッションを返す
     const { usePolling } = require('../../../src/online/usePolling');

@@ -120,6 +120,24 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   const [rouletteHighlight, setRouletteHighlight] = useState<Player>(current.turnOrder[0]);
   const turnOrderRef = useRef<Player[]>(current.turnOrder);
 
+  // Replay the opening roulette for ALL clients whenever the server starts a
+  // new round (Play Again). We detect this by watching for a change to
+  // `startedAt`, which the server bumps on restart. Without this, only the
+  // user who pressed "Play Again" would see the roulette — other participants
+  // would jump straight from the victory screen into the new game's playing
+  // phase.
+  const prevStartedAtRef = useRef<string | null | undefined>(initialSession.startedAt);
+  useEffect(() => {
+    const newStartedAt = current.startedAt;
+    if (newStartedAt && newStartedAt !== prevStartedAtRef.current) {
+      if (!shouldSkipRoulette(current)) {
+        setRouletteHighlight(current.turnOrder[0]);
+        setPhase('rouletting');
+      }
+    }
+    prevStartedAtRef.current = newStartedAt;
+  }, [current]);
+
   useEffect(() => {
     if (phase !== 'rouletting') return;
     turnOrderRef.current = current.turnOrder;
@@ -207,9 +225,9 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   const handleRestart = async () => {
     try {
       const updated = await api.restart(gameId, clientId);
+      // setSession triggers the startedAt-change effect above which replays
+      // the roulette for every client (including this one).
       setSession(updated);
-      setRouletteHighlight(updated.turnOrder[0]);
-      setPhase('rouletting');
     } catch (e) {
       setErrorMsg(friendlyError(e));
     }
