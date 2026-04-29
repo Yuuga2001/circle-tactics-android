@@ -118,7 +118,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   button: {
-    flex: 1,
     paddingVertical: 11,
     borderRadius: RADIUS.pill,
     alignItems: 'center',

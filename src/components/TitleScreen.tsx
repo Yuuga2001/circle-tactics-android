@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
 import { Player, PLAYERS } from '../types';
 import { DEFAULT_HUMAN_FLAGS } from '../logic/seating';
 import { useLang } from '../i18n';
+import { useGameSounds } from '../hooks/useGameSounds';
 import {
   COLORS,
   FONT_FAMILY,
@@ -26,14 +27,15 @@ import DemoBoard from './DemoBoard';
 const AnimSeatCard: React.FC<{
   disabled: boolean;
   onPress: () => void;
+  outerStyle: object;
   style: object[];
   children: React.ReactNode;
   testID: string;
-}> = ({ disabled, onPress, style, children, testID }) => {
+}> = ({ disabled, onPress, outerStyle, style, children, testID }) => {
   const s = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
-    <Animated.View style={anim}>
+    <Animated.View style={[outerStyle, anim]}>
       <Pressable
         testID={testID}
         disabled={disabled}
@@ -61,8 +63,13 @@ type Role = 'HUMAN' | 'AI';
 
 const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) => {
   const { t } = useLang();
+  const { startBGM } = useGameSounds();
   const [mode, setMode] = useState<'menu' | 'local'>('menu');
   const [humanFlags, setHumanFlags] = useState<Record<Player, boolean>>(DEFAULT_HUMAN_FLAGS);
+
+  useEffect(() => {
+    startBGM();
+  }, [startBGM]);
 
   const humans = useMemo(() => PLAYERS.filter((p) => humanFlags[p]), [humanFlags]);
   const humanCount = humans.length;
@@ -98,6 +105,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
             size="lg"
             onPress={() => setMode('local')}
             testID="play-local-btn"
+            style={{ transform: [{ scale: 1.1 }] }}
           />
           <Button
             title={t.playOnline}
@@ -105,6 +113,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
             size="lg"
             onPress={onPlayOnline}
             testID="play-online-btn"
+            style={{ transform: [{ scale: 0.5 }] }}
           />
 
           <DemoBoard />
@@ -136,6 +145,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
                   testID={`seat-toggle-${p}`}
                   disabled={isLastHuman}
                   onPress={() => toggleRole(p)}
+                  outerStyle={styles.seatCardOuter}
                   style={[
                     styles.seatCard,
                     role === 'HUMAN'
@@ -262,8 +272,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
-  seatCard: {
+  seatCardOuter: {
     width: '48%',
+  },
+  seatCard: {
     padding: 12,
     borderRadius: RADIUS.section,
     borderWidth: 2,

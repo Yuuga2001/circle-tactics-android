@@ -82,9 +82,10 @@ export function useBoardDrag(options: Options): BoardDragApi {
           onPanResponderGrant: () => {
             draggingRef.current = false;
           },
-          onPanResponderMove: (evt, gs) => {
+          onPanResponderMove: (_evt, gs) => {
             if (!draggingRef.current && gs.dx * gs.dx + gs.dy * gs.dy < DRAG_THRESHOLD_SQ) return;
-            const { pageX, pageY } = evt.nativeEvent;
+            const px = gs.moveX;
+            const py = gs.moveY;
             if (!draggingRef.current) {
               draggingRef.current = true;
               optsRef.current.onSelectSize(size);
@@ -92,17 +93,18 @@ export function useBoardDrag(options: Options): BoardDragApi {
               optsRef.current.remeasureBoard?.();
             }
             const hoverCell = optsRef.current.boardLayout
-              ? findCellAt(pageX, pageY, optsRef.current.boardLayout)
+              ? findCellAt(px, py, optsRef.current.boardLayout)
               : null;
-            setDragState({ size, x: pageX, y: pageY, hoverCell });
+            setDragState({ size, x: px, y: py, hoverCell });
           },
-          onPanResponderRelease: (evt) => {
+          onPanResponderRelease: (_evt, gs) => {
             if (!draggingRef.current) {
               optsRef.current.onSelectSize(size);
             } else {
-              const { pageX, pageY } = evt.nativeEvent;
+              const px = gs.moveX;
+              const py = gs.moveY;
               const hoverCell = optsRef.current.boardLayout
-                ? findCellAt(pageX, pageY, optsRef.current.boardLayout)
+                ? findCellAt(px, py, optsRef.current.boardLayout)
                 : null;
               if (hoverCell) {
                 optsRef.current.onPlace(hoverCell.row, hoverCell.col);
@@ -111,6 +113,7 @@ export function useBoardDrag(options: Options): BoardDragApi {
             draggingRef.current = false;
             setDragState(null);
           },
+          onPanResponderTerminationRequest: () => false,
           onPanResponderTerminate: () => {
             draggingRef.current = false;
             setDragState(null);

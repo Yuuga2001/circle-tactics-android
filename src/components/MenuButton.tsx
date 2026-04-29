@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,7 +19,7 @@ function usePressScale(to = 0.93) {
   const onPressOut = () => { s.value = withTiming(1, { duration: PRESS_OUT_DUR, easing: PRESS_EASING }); };
   return { style, onPressIn, onPressOut };
 }
-import { useLang } from '../i18n';
+import { LANGUAGES, LangCode, useLang } from '../i18n';
 import { useAudioSettings } from '../hooks/useAudioSettings';
 import {
   COLORS,
@@ -46,11 +46,12 @@ interface MenuButtonProps {
 }
 
 const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewGame, onToggleBgm, onToggleSe, bgmMuted: bgmMutedProp, seMuted: seMutedProp }) => {
-  const { t } = useLang();
+  const { t, lang, setLang } = useLang();
   const { bgmMuted: bgmMutedHook, seMuted: seMutedHook, setBgmMuted, setSeMuted } = useAudioSettings();
   const bgmMuted = bgmMutedProp !== undefined ? bgmMutedProp : bgmMutedHook;
   const seMuted = seMutedProp !== undefined ? seMutedProp : seMutedHook;
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const panelScale = useSharedValue(0.6);
@@ -104,7 +105,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
           onPressOut={fab.onPressOut}
           style={styles.fab}
         >
-          <Text style={styles.fabLabel}>{t.menuLabel}</Text>
+          <Text style={styles.fabLabel}>Menu</Text>
         </Pressable>
       </Animated.View>
 
@@ -136,6 +137,16 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                   </Pressable>
                 </Animated.View>
               )}
+              <View style={styles.divider} />
+              <Pressable
+                onPress={() => setLangOpen(true)}
+                style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+              >
+                <View style={styles.langRow}>
+                  <Text style={styles.itemText}>🌐 {LANGUAGES[lang]}</Text>
+                  <Text style={styles.chevron}>›</Text>
+                </View>
+              </Pressable>
               <View style={styles.divider} />
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleLabel}>{t.bgmLabel}</Text>
@@ -181,6 +192,33 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
         }}
         onCancel={() => setConfirmAction(null)}
       />
+
+      <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
+        <Pressable style={styles.langBackdrop} onPress={() => setLangOpen(false)}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={styles.langPanel}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {(Object.entries(LANGUAGES) as [LangCode, string][]).map(([code, name]) => {
+                const selected = code === lang;
+                return (
+                  <Pressable
+                    key={code}
+                    onPress={() => { setLang(code); setLangOpen(false); }}
+                    style={({ pressed }) => [
+                      styles.langOption,
+                      selected ? styles.langOptionSelected : null,
+                      pressed && !selected ? styles.itemPressed : null,
+                    ]}
+                  >
+                    <Text style={[styles.langOptionText, selected ? styles.langOptionSelectedText : null]}>
+                      {name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 };
@@ -265,6 +303,49 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     fontSize: 13,
     color: COLORS.white,
+  },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chevron: {
+    fontSize: 18,
+    color: COLORS.boardFrame,
+    opacity: 0.6,
+  },
+  langBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(40,25,20,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  langPanel: {
+    backgroundColor: '#fff',
+    borderRadius: RADIUS.section,
+    borderWidth: 2,
+    borderColor: COLORS.boardFrame,
+    minWidth: 240,
+    maxHeight: 420,
+    overflow: 'hidden',
+    ...SHADOWS.elevated,
+  },
+  langOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  langOptionSelected: {
+    backgroundColor: 'rgba(255,193,7,0.28)',
+  },
+  langOptionText: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.lg,
+    color: '#333',
+  },
+  langOptionSelectedText: {
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.boardFrame,
   },
 });
 

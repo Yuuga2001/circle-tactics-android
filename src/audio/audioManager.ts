@@ -53,6 +53,7 @@ class AudioManager {
       if (!this.bgmPlayer) {
         this.bgmPlayer = createAudioPlayer(require('../../assets/sounds/bgm_loop.wav'));
         this.bgmPlayer.loop = true;
+        this.bgmPlayer.volume = 0.2;
       }
       this.bgmPlayer.play();
     } catch {
@@ -70,7 +71,11 @@ class AudioManager {
 
   setBgmMuted(muted: boolean): void {
     this.bgmMuted = muted;
-    if (muted) this.stopBGM();
+    if (muted) {
+      this.stopBGM();
+    } else {
+      this.startBGM();
+    }
   }
 
   setSeMuted(muted: boolean): void {

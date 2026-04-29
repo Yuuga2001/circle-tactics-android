@@ -2,18 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
-import LanguageSelector from './LanguageSelector';
 import MenuButton, { MenuMode } from './MenuButton';
 import { api } from '../online/api';
 import { clearActiveGame } from '../online/activeGame';
 import { getClientId } from '../online/clientId';
 import { COLORS, FONT_FAMILY, FONT_SIZE } from '../styles/theme';
 
-/**
- * Persistent chrome shown on top of every route.
- * - Title screen : LanguageSelector (left) + メニュー (right)
- * - During play  : App title (left)       + メニュー (right)
- */
 const AppChrome: React.FC = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -44,11 +38,7 @@ const AppChrome: React.FC = () => {
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <View style={[styles.left, { top: topOffset }]} pointerEvents="box-none">
-        {isPlaying ? (
-          <Text style={styles.appTitle}>CircleTactics</Text>
-        ) : (
-          <LanguageSelector />
-        )}
+        <Text style={styles.appTitle}>CircleTactics</Text>
       </View>
       <View style={[styles.right, { top: topOffset }]} pointerEvents="box-none">
         <MenuButton mode={mode} onTitle={isPlaying ? goTitle : undefined} />
