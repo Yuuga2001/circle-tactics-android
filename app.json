@@ -33,7 +33,10 @@
               "host": "circle-tactics.riverapp.jp"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -58,7 +61,8 @@
         {
           "cameraPermission": "Allow CircleTactics to access your camera to scan QR codes."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "extra": {
       "router": {
