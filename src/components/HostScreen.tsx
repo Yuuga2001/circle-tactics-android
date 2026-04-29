@@ -28,6 +28,7 @@ const HostScreen: React.FC<HostScreenProps> = ({ gameId: initialGameId, clientId
   const [starting, setStarting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   const createdRef = useRef(false);
   useEffect(() => {
@@ -56,6 +57,17 @@ const HostScreen: React.FC<HostScreenProps> = ({ gameId: initialGameId, clientId
   const players = session?.players ?? [];
   const playersCount = players.length;
   const aiCount = Math.max(0, 4 - playersCount);
+
+  const copyUrl = async () => {
+    if (!roomCode) return;
+    try {
+      await Clipboard.setStringAsync(`https://circle-tactics.riverapp.jp/?room=${roomCode}`);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 1500);
+    } catch {
+      /* noop */
+    }
+  };
 
   const copyCode = async () => {
     if (!roomCode) return;
@@ -126,6 +138,15 @@ const HostScreen: React.FC<HostScreenProps> = ({ gameId: initialGameId, clientId
               <View style={hostStyles.qrBox}>
                 <QRCode value={`https://circle-tactics.riverapp.jp/?room=${roomCode}`} size={180} backgroundColor="#fff" />
               </View>
+              <Pressable
+                testID="copy-url-btn"
+                onPress={copyUrl}
+                style={[codeStyles.copyBtn, copiedUrl ? codeStyles.copyBtnCopied : null, hostStyles.copyUrlBtn]}
+              >
+                <Text style={[codeStyles.copyBtnLabel, copiedUrl ? codeStyles.copyBtnLabelCopied : null]}>
+                  {copiedUrl ? t.copied : t.copyUrl}
+                </Text>
+              </Pressable>
             </View>
           )}
         </View>
@@ -167,6 +188,10 @@ const hostStyles = StyleSheet.create({
   qrWrap: {
     alignItems: 'center',
     marginTop: 12,
+    gap: 10,
+  },
+  copyUrlBtn: {
+    marginTop: 2,
   },
   qrBox: {
     backgroundColor: '#fff',
