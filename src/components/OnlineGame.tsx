@@ -5,7 +5,7 @@ import { api, friendlyError } from '../online/api';
 import { GameSession } from '../online/types';
 import { usePolling } from '../online/usePolling';
 import { useHeartbeat } from '../online/useHeartbeat';
-import { clearActiveGame, saveActiveGame, setLiveRoomCode } from '../online/activeGame';
+import { clearActiveGame, saveActiveGame, setLiveRoomCode, setLivePlayerCount } from '../online/activeGame';
 import { useLang } from '../i18n';
 import { useGameSounds } from '../hooks/useGameSounds';
 import BoardComponent from './Board';
@@ -191,6 +191,13 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   }, [current.roomCode]);
 
   useEffect(() => {
+    const humanPlayers = current.players.filter((p) => p.isHuman).length;
+    const spectators = current.waitQueue?.length ?? 0;
+    setLivePlayerCount(humanPlayers + spectators);
+    return () => setLivePlayerCount(null);
+  }, [current.players, current.waitQueue]);
+
+  useEffect(() => {
     if (current.status === 'FINISHED') clearActiveGame();
   }, [current.status]);
 
@@ -362,6 +369,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
               isCurrentPlayer={phase === 'playing'}
               variant="full"
               interactive={isMyTurn && phase === 'playing'}
+              highlight={isMyTurn && phase === 'playing'}
               draggingSize={drag.draggingSize}
               bindPiecePointerDown={drag.bindPiecePointerDown}
               label={

@@ -33,6 +33,8 @@ jest.mock('../../../src/online/activeGame', () => ({
   clearActiveGame: jest.fn().mockResolvedValue(undefined),
   useLiveRoomCode: jest.fn().mockReturnValue(null),
   setLiveRoomCode: jest.fn(),
+  useLivePlayerCount: jest.fn().mockReturnValue(null),
+  setLivePlayerCount: jest.fn(),
 }));
 
 jest.mock('../../../src/online/clientId', () => ({

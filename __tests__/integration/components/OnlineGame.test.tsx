@@ -33,6 +33,8 @@ jest.mock('../../../src/online/activeGame', () => ({
   clearActiveGame: jest.fn(),
   setLiveRoomCode: jest.fn(),
   useLiveRoomCode: jest.fn().mockReturnValue(null),
+  setLivePlayerCount: jest.fn(),
+  useLivePlayerCount: jest.fn().mockReturnValue(null),
 }));
 
 jest.mock('../../../src/i18n/index', () => ({

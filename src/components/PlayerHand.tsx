@@ -28,6 +28,7 @@ interface PlayerHandProps {
   interactive?: boolean;
   draggingSize?: PieceSize | null;
   bindPiecePointerDown?: (size: PieceSize) => Record<string, unknown>;
+  highlight?: boolean;
 }
 
 const AnimPieceBtn: React.FC<{
@@ -78,6 +79,7 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
   interactive,
   draggingSize,
   bindPiecePointerDown,
+  highlight = false,
 }) => {
   const isInteractive = interactive ?? (variant === 'full' && isCurrentPlayer);
   const playerDark = PLAYER_BORDER_COLORS[player];
@@ -89,6 +91,7 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
         SHADOWS.subtle,
         { borderColor: playerDark },
         isCurrentPlayer ? styles.active : null,
+        highlight ? styles.highlight : null,
       ]}
     >
       {label !== undefined && (
@@ -178,6 +181,15 @@ const styles = StyleSheet.create({
   },
   active: {
     ...SHADOWS.standard,
+  },
+  highlight: {
+    borderColor: COLORS.highlight,
+    backgroundColor: 'rgba(255, 193, 7, 0.12)',
+    shadowColor: COLORS.highlight,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 8,
   },
   label: {
     textAlign: 'center',

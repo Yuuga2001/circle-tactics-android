@@ -63,3 +63,21 @@ export function useLiveRoomCode(): string | null {
   }, []);
   return code;
 }
+
+let _livePlayerCount: number | null = null;
+const _playerCountListeners = new Set<(n: number | null) => void>();
+
+export function setLivePlayerCount(count: number | null): void {
+  _livePlayerCount = count;
+  _playerCountListeners.forEach((fn) => fn(count));
+}
+
+export function useLivePlayerCount(): number | null {
+  const [count, setCount] = useState<number | null>(_livePlayerCount);
+  useEffect(() => {
+    setCount(_livePlayerCount);
+    _playerCountListeners.add(setCount);
+    return () => { _playerCountListeners.delete(setCount); };
+  }, []);
+  return count;
+}
