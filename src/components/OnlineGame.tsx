@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { PieceSize, Player, SIZES } from '../types';
 import { api, friendlyError } from '../online/api';
 import { GameSession } from '../online/types';
@@ -48,6 +55,41 @@ function shouldSkipRoulette(s: GameSession): boolean {
   }
   return false;
 }
+
+const TimerBadge: React.FC<{ seconds: number }> = ({ seconds }) => {
+  const isCritical = seconds <= 5;
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isCritical) {
+      scale.value = withRepeat(
+        withTiming(1.18, { duration: 400, easing: Easing.inOut(Easing.quad) }),
+        -1,
+        true,
+      );
+    } else {
+      scale.value = withTiming(1, { duration: 150 });
+    }
+  }, [isCritical, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={animStyle}>
+      <Text
+        style={[
+          styles.timerText,
+          seconds <= 10 && styles.timerUrgent,
+          isCritical && styles.timerCritical,
+        ]}
+      >
+        {seconds}s
+      </Text>
+    </Animated.View>
+  );
+};
 
 const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSession, onLeave, onDemoted }) => {
   const { t } = useLang();
@@ -230,12 +272,17 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   }, [current.status, current.winner]);
 
   const currentPlayerEntry = current.players.find((p) => p.color === current.currentPlayer);
+  // currentTurnStartedAt はターン交代時にのみ更新される。
+  // lastActiveAt はハートビートのたびにリセットされるため基準に使うと不安定になる。
+  const elapsedSinceTurnStart = current.currentTurnStartedAt
+    ? now - new Date(current.currentTurnStartedAt).getTime()
+    : 0;
   const elapsedSinceActivity = currentPlayerEntry?.isHuman
     ? now - new Date(currentPlayerEntry.lastActiveAt).getTime()
     : 0;
   const turnSecondsLeft =
     phase === 'playing' && !current.winner && currentPlayerEntry?.isHuman
-      ? Math.max(0, Math.ceil((AI_TAKEOVER_MS - elapsedSinceActivity) / 1000))
+      ? Math.max(0, Math.ceil((AI_TAKEOVER_MS - elapsedSinceTurnStart) / 1000))
       : null;
   const takeoverSecondsLeft =
     currentPlayerEntry?.isHuman && elapsedSinceActivity > AI_TAKEOVER_MS / 2
@@ -345,9 +392,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
               <View style={styles.turnRow}>
                 <Text style={styles.turnText}>{turnText}</Text>
                 {turnSecondsLeft !== null && (
-                  <Text style={[styles.timerText, turnSecondsLeft <= 10 && styles.timerUrgent]}>
-                    {turnSecondsLeft}s
-                  </Text>
+                  <TimerBadge seconds={turnSecondsLeft} />
                 )}
               </View>
               {phase === 'playing' && takeoverSecondsLeft !== null && (
@@ -456,6 +501,11 @@ const styles = StyleSheet.create({
   timerUrgent: {
     color: '#fff',
     backgroundColor: PLAYER_BORDER_COLORS.RED,
+  },
+  timerCritical: {
+    fontSize: FONT_SIZE.status,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
   },
   takeoverWarning: {
     fontFamily: FONT_FAMILY.bold,

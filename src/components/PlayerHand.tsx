@@ -84,14 +84,13 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
   const isInteractive = interactive ?? (variant === 'full' && isCurrentPlayer);
   const playerDark = PLAYER_BORDER_COLORS[player];
 
-  return (
+  const card = (
     <View
       style={[
         styles.container,
         SHADOWS.subtle,
         { borderColor: playerDark },
         isCurrentPlayer ? styles.active : null,
-        highlight ? styles.highlight : null,
       ]}
     >
       {label !== undefined && (
@@ -166,6 +165,11 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
       </View>
     </View>
   );
+
+  if (highlight) {
+    return <View style={styles.highlightWrapper}>{card}</View>;
+  }
+  return card;
 };
 
 const styles = StyleSheet.create({
@@ -178,18 +182,23 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.card,
     backgroundColor: 'rgba(255,255,255,0.85)',
     borderWidth: 3,
+    overflow: 'hidden',
   },
   active: {
     ...SHADOWS.standard,
   },
-  highlight: {
-    borderColor: COLORS.highlight,
-    backgroundColor: 'rgba(255, 193, 7, 0.12)',
+  highlightWrapper: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
+    borderRadius: RADIUS.card + 4,
+    padding: 3,
+    backgroundColor: COLORS.highlight,
     shadowColor: COLORS.highlight,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 12,
   },
   label: {
     textAlign: 'center',
