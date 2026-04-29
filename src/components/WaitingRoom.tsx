@@ -27,7 +27,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
   onLeave,
 }) => {
   const { t } = useLang();
-  const { session: polledSession } = usePolling(gameId, { intervalMs: 3000 });
+  const { session: polledSession } = usePolling(gameId, { intervalMs: 1500 });
   useHeartbeat(gameId, clientId, true);
 
   const session = polledSession ?? initialSession;

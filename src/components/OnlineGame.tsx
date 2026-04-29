@@ -42,17 +42,17 @@ export interface OnlineGameProps {
 }
 
 const AI_TAKEOVER_MS = 30_000;
-const AI_INITIAL_DELAY_MS = 4500;
 
 type Phase = 'rouletting' | 'announcing' | 'playing';
 
+/** Detect whether the game is already mid-flight when this component mounts —
+ *  e.g. when the user is rejoining — so we can skip the opening roulette.
+ *  We deliberately do NOT use elapsed time since startedAt: non-host clients
+ *  only learn about PLAYING via polling and would otherwise miss the roulette
+ *  while the host sees it. The board state alone is the reliable signal. */
 function shouldSkipRoulette(s: GameSession): boolean {
   if (s.winner) return true;
   for (const row of s.board) for (const cell of row) for (const slot of cell) if (slot !== null) return true;
-  if (s.startedAt) {
-    const elapsed = Date.now() - new Date(s.startedAt).getTime();
-    if (elapsed > AI_INITIAL_DELAY_MS) return true;
-  }
   return false;
 }
 

@@ -151,7 +151,7 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
     },
     winner: null,
     winInfo: null,
-    startedAt: new Date(Date.now() - 10000).toISOString(),
+    startedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     currentTurnStartedAt: null,
