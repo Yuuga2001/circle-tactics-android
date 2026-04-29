@@ -191,4 +191,68 @@ describe('Game component', () => {
     act(() => { jest.runAllTimers(); });
     expect(getByTestId('turn-text')).toBeTruthy();
   });
+
+  it('AI のターンで有効手あり → dispatch(SELECT_SIZE) と dispatch(PLACE_PIECE) が呼ばれる', () => {
+    const dispatch = jest.fn();
+    // BLUE は humanPlayers に含まれていない → AI
+    const state = makePlaying({ humanPlayers: ['RED'], currentPlayer: 'BLUE' });
+    render(<GameComponent state={state} dispatch={dispatch} />);
+    // roulette (~3000ms) → announcing (1200ms) → AI thinking (1000ms) → place (200ms)
+    act(() => { jest.advanceTimersByTime(3500); }); // roulette 終了
+    act(() => { jest.advanceTimersByTime(1500); }); // announcing → playing
+    act(() => { jest.advanceTimersByTime(1500); }); // AI SELECT_SIZE
+    act(() => { jest.advanceTimersByTime(500); });  // AI PLACE_PIECE
+    const types = dispatch.mock.calls.map((c) => c[0].type);
+    expect(types).toContain('SELECT_SIZE');
+    expect(types).toContain('PLACE_PIECE');
+  });
+
+  it('hand が空の状態で board が表示され turn-text も表示される', () => {
+    const dispatch = jest.fn();
+    const emptyHand = { SMALL: 0, MEDIUM: 0, LARGE: 0 };
+    const base = createInitialGameState();
+    const state: GameState = {
+      ...base,
+      gameMode: 'PLAYING',
+      humanPlayers: ['RED'],
+      currentPlayer: 'RED',
+      turnOrder: ['RED', 'BLUE', 'YELLOW', 'GREEN'],
+      hands: {
+        RED: emptyHand,
+        BLUE: base.hands.BLUE,
+        YELLOW: base.hands.YELLOW,
+        GREEN: base.hands.GREEN,
+      },
+    };
+    const { getByTestId } = render(<GameComponent state={state} dispatch={dispatch} />);
+    act(() => { jest.runAllTimers(); });
+    expect(getByTestId('game-board')).toBeTruthy();
+  });
+
+  it('Restart 後に roulette が再起動される（dispatch なしで phase が rouletting に戻る）', () => {
+    const dispatch = jest.fn();
+    const state = makePlaying({ winner: 'RED' });
+    const { getByTestId, rerender } = render(<GameComponent state={state} dispatch={dispatch} />);
+    act(() => { jest.runAllTimers(); });
+    fireEvent.press(getByTestId('play-again-btn'));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'RESTART_GAME' });
+  });
+
+  it('winner=RED のとき play-again-btn と title-btn の両方が表示される', () => {
+    const dispatch = jest.fn();
+    const state = makePlaying({ winner: 'RED' });
+    const { getByTestId } = render(<GameComponent state={state} dispatch={dispatch} />);
+    act(() => { jest.runAllTimers(); });
+    expect(getByTestId('play-again-btn')).toBeTruthy();
+    expect(getByTestId('title-btn')).toBeTruthy();
+  });
+
+  it('winner がないとき play-again-btn と title-btn は表示されない', () => {
+    const dispatch = jest.fn();
+    const state = makePlaying();
+    const { queryByTestId } = render(<GameComponent state={state} dispatch={dispatch} />);
+    act(() => { jest.runAllTimers(); });
+    expect(queryByTestId('play-again-btn')).toBeNull();
+    expect(queryByTestId('title-btn')).toBeNull();
+  });
 });

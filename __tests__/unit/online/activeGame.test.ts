@@ -1,8 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { renderHook, act } from '@testing-library/react-native';
 import {
   saveActiveGame,
   loadActiveGame,
   clearActiveGame,
+  setLiveRoomCode,
+  useLiveRoomCode,
+  setLivePlayerCount,
+  useLivePlayerCount,
 } from '../../../src/online/activeGame';
 
 const mockStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
@@ -65,5 +70,102 @@ describe('clearActiveGame', () => {
   it('AsyncStorage から削除する', async () => {
     await clearActiveGame();
     expect(mockStorage.removeItem).toHaveBeenCalled();
+  });
+});
+
+describe('loadActiveGame — エラー系', () => {
+  it('AsyncStorage が例外を投げた場合 null を返す', async () => {
+    mockStorage.getItem.mockRejectedValue(new Error('disk error'));
+    const result = await loadActiveGame();
+    expect(result).toBeNull();
+  });
+
+  it('破損した JSON の場合 null を返す', async () => {
+    mockStorage.getItem.mockResolvedValue('{broken json');
+    const result = await loadActiveGame();
+    expect(result).toBeNull();
+  });
+});
+
+describe('saveActiveGame — エラー系', () => {
+  it('AsyncStorage が例外を投げても例外を外に出さない', async () => {
+    mockStorage.setItem.mockRejectedValue(new Error('write error'));
+    await expect(saveActiveGame({ gameId: 'g1', roomCode: 'R1' })).resolves.toBeUndefined();
+  });
+});
+
+describe('clearActiveGame — エラー系', () => {
+  it('AsyncStorage が例外を投げても例外を外に出さない', async () => {
+    mockStorage.removeItem.mockRejectedValue(new Error('remove error'));
+    await expect(clearActiveGame()).resolves.toBeUndefined();
+  });
+});
+
+describe('useLiveRoomCode', () => {
+  beforeEach(() => {
+    setLiveRoomCode(null);
+  });
+
+  it('初期値は null', () => {
+    const { result } = renderHook(() => useLiveRoomCode());
+    expect(result.current).toBeNull();
+  });
+
+  it('setLiveRoomCode を呼ぶとフックの値が更新される', () => {
+    const { result } = renderHook(() => useLiveRoomCode());
+    act(() => { setLiveRoomCode('ABC123'); });
+    expect(result.current).toBe('ABC123');
+  });
+
+  it('null に戻すと null になる', () => {
+    act(() => { setLiveRoomCode('XYZ'); });
+    const { result } = renderHook(() => useLiveRoomCode());
+    act(() => { setLiveRoomCode(null); });
+    expect(result.current).toBeNull();
+  });
+
+  it('アンマウント後は更新を受け取らない', () => {
+    const { result, unmount } = renderHook(() => useLiveRoomCode());
+    unmount();
+    act(() => { setLiveRoomCode('LEAKED'); });
+    expect(result.current).toBeNull();
+  });
+
+  it('複数フックが同時に更新される', () => {
+    const { result: r1 } = renderHook(() => useLiveRoomCode());
+    const { result: r2 } = renderHook(() => useLiveRoomCode());
+    act(() => { setLiveRoomCode('MULTI'); });
+    expect(r1.current).toBe('MULTI');
+    expect(r2.current).toBe('MULTI');
+  });
+});
+
+describe('useLivePlayerCount', () => {
+  beforeEach(() => {
+    setLivePlayerCount(null);
+  });
+
+  it('初期値は null', () => {
+    const { result } = renderHook(() => useLivePlayerCount());
+    expect(result.current).toBeNull();
+  });
+
+  it('setLivePlayerCount を呼ぶとフックの値が更新される', () => {
+    const { result } = renderHook(() => useLivePlayerCount());
+    act(() => { setLivePlayerCount(3); });
+    expect(result.current).toBe(3);
+  });
+
+  it('0 を設定できる', () => {
+    const { result } = renderHook(() => useLivePlayerCount());
+    act(() => { setLivePlayerCount(0); });
+    expect(result.current).toBe(0);
+  });
+
+  it('アンマウント後は更新を受け取らない', () => {
+    const { result, unmount } = renderHook(() => useLivePlayerCount());
+    unmount();
+    act(() => { setLivePlayerCount(99); });
+    expect(result.current).toBeNull();
   });
 });

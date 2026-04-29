@@ -8,7 +8,7 @@ jest.useFakeTimers({ doNotFake: ['setInterval'] });
 // ── モック定義 ────────────────────────────────────────────────────────────────
 
 jest.mock('../../../src/online/usePolling', () => ({
-  usePolling: () => ({ session: null, error: null, setSession: jest.fn() }),
+  usePolling: jest.fn().mockReturnValue({ session: null, error: null, setSession: jest.fn() }),
 }));
 
 jest.mock('../../../src/online/useHeartbeat', () => ({
@@ -272,5 +272,107 @@ describe('OnlineGame', () => {
     act(() => { jest.runAllTimers(); });
     const victoryText = getByTestId('online-victory-text');
     expect(victoryText).toBeTruthy();
+  });
+
+  it('winner=DRAW のとき DRAW テキストが表示される', () => {
+    const session = makeSession({ winner: 'DRAW', status: 'FINISHED' });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    expect(getByTestId('online-victory-text').props.children).toBe('DRAW');
+  });
+
+  it('確認ダイアログで Cancel を押すと onLeave は呼ばれない', () => {
+    const onLeave = jest.fn();
+    const session = makeSession({ winner: 'BLUE', status: 'PLAYING' });
+    const { getByTestId, getByText, queryByText } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={onLeave}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    fireEvent.press(getByTestId('online-leave-btn'));
+    fireEvent.press(getByText('Cancel'));
+    expect(onLeave).not.toHaveBeenCalled();
+  });
+
+  it('ボードにコマがある場合は shouldSkipRoulette が true → ゲームボードがすぐ表示される', () => {
+    const boardWithPiece = makeSession().board;
+    boardWithPiece[0][0][0] = { player: 'RED', size: 'SMALL' };
+    const session = makeSession({ board: boardWithPiece });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    // ルーレットなしで即レンダー（act なしでも board が存在する）
+    expect(getByTestId('online-game-board')).toBeTruthy();
+  });
+
+  it('api.restart が呼ばれてセッションが更新される', async () => {
+    const { api } = require('../../../src/online/api');
+    const newSession = makeSession({ version: 2 });
+    api.restart.mockResolvedValueOnce(newSession);
+
+    const session = makeSession({ winner: 'RED', status: 'FINISHED' });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    await act(async () => {
+      fireEvent.press(getByTestId('online-play-again-btn'));
+    });
+    expect(api.restart).toHaveBeenCalledWith('game-123', 'client-host');
+  });
+
+  it('clientId がプレイヤーリストに存在しないとき onDemoted が呼ばれる', async () => {
+    // usePolling のモックを上書きして、clientId 不在のセッションを返す
+    const { usePolling } = require('../../../src/online/usePolling');
+    const demotedSession = makeSession({
+      status: 'PLAYING',
+      players: [
+        { clientId: 'other-client', color: 'BLUE', lastActiveAt: new Date().toISOString(), isHuman: true },
+      ],
+    });
+    usePolling.mockReturnValueOnce({
+      session: demotedSession,
+      error: null,
+      setSession: jest.fn(),
+    });
+
+    const onDemoted = jest.fn();
+    const initialSession = makeSession({ status: 'PLAYING' });
+    render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={initialSession}
+        onLeave={jest.fn()}
+        onDemoted={onDemoted}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    expect(onDemoted).toHaveBeenCalledWith(demotedSession);
   });
 });
