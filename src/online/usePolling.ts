@@ -21,7 +21,8 @@ export function usePolling(
 
   const setSession = (s: GameSession | null) => {
     sessionStatusRef.current = s?.status ?? null;
-    setSessionState(s);
+    // ポーリングの古いレスポンスで新しい状態を上書きしないようバージョン比較
+    setSessionState((prev) => (!prev || !s || s.version >= prev.version) ? s : prev);
   };
 
   useEffect(() => {

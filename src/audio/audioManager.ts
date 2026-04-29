@@ -13,8 +13,15 @@ const SOUND_FILES: Record<SoundName, number> = {
   roulette: require('../../assets/sounds/roulette.wav'),
 };
 
+// Sounds that may be triggered in rapid succession get a pool of players
+// so we never seek on an actively-playing instance (which causes crackling).
+const POOL_SIZE = 3;
+const POOLED_SOUNDS: ReadonlySet<SoundName> = new Set(['place', 'roulette']);
+
 class AudioManager {
   private players: Partial<Record<SoundName, AudioPlayer>> = {};
+  private pools: Partial<Record<SoundName, AudioPlayer[]>> = {};
+  private poolIndex: Partial<Record<SoundName, number>> = {};
   private bgmPlayer: AudioPlayer | null = null;
   private bgmMuted = false;
   private seMuted = false;
@@ -28,7 +35,12 @@ class AudioManager {
 
     for (const [name, file] of Object.entries(SOUND_FILES) as [SoundName, number][]) {
       try {
-        this.players[name] = createAudioPlayer(file);
+        if (POOLED_SOUNDS.has(name)) {
+          this.pools[name] = Array.from({ length: POOL_SIZE }, () => createAudioPlayer(file));
+          this.poolIndex[name] = 0;
+        } else {
+          this.players[name] = createAudioPlayer(file);
+        }
       } catch {
         // noop
       }
@@ -37,11 +49,22 @@ class AudioManager {
 
   async play(name: SoundName): Promise<void> {
     if (this.seMuted) return;
-    const player = this.players[name];
-    if (!player) return;
     try {
-      await player.seekTo(0);
-      player.play();
+      if (POOLED_SOUNDS.has(name)) {
+        const pool = this.pools[name];
+        if (!pool) return;
+        const idx = this.poolIndex[name] ?? 0;
+        const player = pool[idx];
+        this.poolIndex[name] = (idx + 1) % POOL_SIZE;
+        await player.seekTo(0);
+        player.play();
+      } else {
+        const player = this.players[name];
+        if (!player) return;
+        player.pause();
+        await player.seekTo(0);
+        player.play();
+      }
     } catch {
       // noop
     }
