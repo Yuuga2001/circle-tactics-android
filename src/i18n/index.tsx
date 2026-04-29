@@ -119,6 +119,13 @@ export interface T {
   willJoinAuto: string;
   joiningLabel: string;
   loading: string;
+
+  // Network / error views
+  networkErrorTitle: string;
+  networkErrorDesc: string;
+  retryBtn: string;
+  errorTitle: string;
+  errorDesc: string;
 }
 
 const t: Record<LangCode, T> = {
@@ -200,6 +207,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'You will join automatically when a seat opens.',
     joiningLabel: 'Joining...',
     loading: 'Loading…',
+    networkErrorTitle: 'Connection Error',
+    networkErrorDesc: 'Check your internet connection.\nReconnecting automatically…',
+    retryBtn: 'Retry',
+    errorTitle: 'Something went wrong',
+    errorDesc: 'Please try again or restart the app.',
   },
 
   ja: {
@@ -280,6 +292,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: '空席が出たら自動的に参加します。',
     joiningLabel: '参加中...',
     loading: '読み込み中…',
+    networkErrorTitle: '接続エラー',
+    networkErrorDesc: 'インターネット接続を確認してください。\n自動で再接続しています…',
+    retryBtn: '再試行',
+    errorTitle: 'エラーが発生しました',
+    errorDesc: 'もう一度お試しください。',
   },
 
   zh: {
@@ -360,6 +377,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: '有空位时将自动加入。',
     joiningLabel: '加入中...',
     loading: '加载中…',
+    networkErrorTitle: '连接错误',
+    networkErrorDesc: '请检查您的网络连接。\n正在自动重新连接…',
+    retryBtn: '重试',
+    errorTitle: '发生错误',
+    errorDesc: '请重试或重启应用程序。',
   },
 
   'zh-TW': {
@@ -440,6 +462,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: '有空位時將自動加入。',
     joiningLabel: '加入中...',
     loading: '載入中…',
+    networkErrorTitle: '連接錯誤',
+    networkErrorDesc: '請檢查您的網路連線。\n正在自動重新連線…',
+    retryBtn: '重試',
+    errorTitle: '發生錯誤',
+    errorDesc: '請重試或重啟應用程式。',
   },
 
   ko: {
@@ -520,6 +547,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: '자리가 나면 자동으로 참여합니다.',
     joiningLabel: '참여 중...',
     loading: '로딩 중…',
+    networkErrorTitle: '연결 오류',
+    networkErrorDesc: '인터넷 연결을 확인해주세요.\n자동으로 재연결 중…',
+    retryBtn: '재시도',
+    errorTitle: '오류가 발생했습니다',
+    errorDesc: '다시 시도하거나 앱을 재시작해 주세요.',
   },
 
   es: {
@@ -600,6 +632,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Te unirás automáticamente cuando haya un asiento libre.',
     joiningLabel: 'Uniéndose...',
     loading: 'Cargando…',
+    networkErrorTitle: 'Error de conexión',
+    networkErrorDesc: 'Comprueba tu conexión a Internet.\nReconectando automáticamente…',
+    retryBtn: 'Reintentar',
+    errorTitle: 'Algo salió mal',
+    errorDesc: 'Por favor inténtalo de nuevo o reinicia la aplicación.',
   },
 
   fr: {
@@ -680,6 +717,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Vous rejoindrez automatiquement quand une place se libère.',
     joiningLabel: 'Connexion...',
     loading: 'Chargement…',
+    networkErrorTitle: 'Erreur de connexion',
+    networkErrorDesc: 'Vérifiez votre connexion Internet.\nReconnexion automatique…',
+    retryBtn: 'Réessayer',
+    errorTitle: 'Une erreur est survenue',
+    errorDesc: 'Veuillez réessayer ou redémarrer l\'application.',
   },
 
   de: {
@@ -760,6 +802,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Du trittst automatisch bei, wenn ein Platz frei wird.',
     joiningLabel: 'Beitreten...',
     loading: 'Laden…',
+    networkErrorTitle: 'Verbindungsfehler',
+    networkErrorDesc: 'Überprüfe deine Internetverbindung.\nAutomatische Neuverbindung…',
+    retryBtn: 'Erneut versuchen',
+    errorTitle: 'Ein Fehler ist aufgetreten',
+    errorDesc: 'Bitte versuche es erneut oder starte die App neu.',
   },
 
   it: {
@@ -840,6 +887,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Ti unirai automaticamente quando si libera un posto.',
     joiningLabel: 'Connessione...',
     loading: 'Caricamento…',
+    networkErrorTitle: 'Errore di connessione',
+    networkErrorDesc: 'Controlla la connessione internet.\nRiconnessione automatica…',
+    retryBtn: 'Riprova',
+    errorTitle: 'Qualcosa è andato storto',
+    errorDesc: 'Riprova o riavvia l\'app.',
   },
 
   pt: {
@@ -920,6 +972,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Você entrará automaticamente quando houver uma vaga.',
     joiningLabel: 'Entrando...',
     loading: 'Carregando…',
+    networkErrorTitle: 'Erro de conexão',
+    networkErrorDesc: 'Verifique sua conexão com a internet.\nReconectando automaticamente…',
+    retryBtn: 'Tentar novamente',
+    errorTitle: 'Algo deu errado',
+    errorDesc: 'Por favor, tente novamente ou reinicie o app.',
   },
 
   ru: {
@@ -1000,6 +1057,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Вы войдёте автоматически, когда освободится место.',
     joiningLabel: 'Подключение...',
     loading: 'Загрузка…',
+    networkErrorTitle: 'Ошибка соединения',
+    networkErrorDesc: 'Проверьте подключение к интернету.\nАвтоматическое переподключение…',
+    retryBtn: 'Повторить',
+    errorTitle: 'Что-то пошло не так',
+    errorDesc: 'Пожалуйста, попробуйте ещё раз или перезапустите приложение.',
   },
 
   ar: {
@@ -1080,6 +1142,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'ستنضم تلقائياً عند توفر مقعد.',
     joiningLabel: 'جارٍ الانضمام...',
     loading: 'جارٍ التحميل…',
+    networkErrorTitle: 'خطأ في الاتصال',
+    networkErrorDesc: 'تحقق من اتصالك بالإنترنت.\nإعادة الاتصال تلقائيًا…',
+    retryBtn: 'إعادة المحاولة',
+    errorTitle: 'حدث خطأ ما',
+    errorDesc: 'يرجى المحاولة مرة أخرى أو إعادة تشغيل التطبيق.',
   },
 
   hi: {
@@ -1160,6 +1227,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'सीट खाली होने पर स्वचालित रूप से शामिल होंगे।',
     joiningLabel: 'शामिल हो रहे हैं...',
     loading: 'लोड हो रहा है…',
+    networkErrorTitle: 'कनेक्शन त्रुटि',
+    networkErrorDesc: 'अपना इंटरनेट कनेक्शन जांचें।\nस्वचालित रूप से पुनः कनेक्ट हो रहा है…',
+    retryBtn: 'पुनः प्रयास',
+    errorTitle: 'कुछ गलत हो गया',
+    errorDesc: 'कृपया पुनः प्रयास करें या ऐप पुनः आरंभ करें।',
   },
 
   tr: {
@@ -1240,6 +1312,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Bir koltuk açıldığında otomatik olarak katılacaksın.',
     joiningLabel: 'Katılınıyor...',
     loading: 'Yükleniyor…',
+    networkErrorTitle: 'Bağlantı Hatası',
+    networkErrorDesc: 'İnternet bağlantını kontrol et.\nOtomatik olarak yeniden bağlanıyor…',
+    retryBtn: 'Yeniden dene',
+    errorTitle: 'Bir şeyler ters gitti',
+    errorDesc: 'Lütfen tekrar deneyin veya uygulamayı yeniden başlatın.',
   },
 
   id: {
@@ -1320,6 +1397,11 @@ const t: Record<LangCode, T> = {
     willJoinAuto: 'Kamu akan bergabung otomatis ketika ada kursi kosong.',
     joiningLabel: 'Bergabung...',
     loading: 'Memuat…',
+    networkErrorTitle: 'Kesalahan Koneksi',
+    networkErrorDesc: 'Periksa koneksi internet Anda.\nMenyambung kembali secara otomatis…',
+    retryBtn: 'Coba lagi',
+    errorTitle: 'Terjadi kesalahan',
+    errorDesc: 'Silakan coba lagi atau mulai ulang aplikasi.',
   },
 };
 

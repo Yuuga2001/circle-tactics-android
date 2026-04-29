@@ -22,6 +22,7 @@ import Toast from './Toast';
 import AnnounceOverlay from './AnnounceOverlay';
 import Confetti from './Confetti';
 import ConfirmDialog from './ConfirmDialog';
+import NetworkErrorView from './NetworkErrorView';
 import ScreenContainer from './ui/ScreenContainer';
 import Button from './ui/Button';
 import { useBoardDrag, BoardLayout } from './useBoardDrag';
@@ -101,7 +102,7 @@ const TimerBadge: React.FC<{ seconds: number; isOwn: boolean }> = ({ seconds, is
 const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSession, onLeave, onDemoted }) => {
   const { t } = useLang();
   const { play } = useGameSounds();
-  const { session, setSession } = usePolling(gameId);
+  const { session, error: pollingError, setSession } = usePolling(gameId);
   const current = session ?? initialSession;
   useHeartbeat(gameId, clientId, current.status !== 'FINISHED');
 
@@ -115,6 +116,24 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     demotedRef.current = true;
     onDemoted(session);
   }, [session, clientId, onDemoted]);
+
+  // Network error detection: show overlay after 3 s of continuous polling failure
+  const [showNetworkError, setShowNetworkError] = useState(false);
+  const networkErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (pollingError) {
+      if (!networkErrorTimerRef.current) {
+        networkErrorTimerRef.current = setTimeout(() => setShowNetworkError(true), 3000);
+      }
+    } else {
+      if (networkErrorTimerRef.current) {
+        clearTimeout(networkErrorTimerRef.current);
+        networkErrorTimerRef.current = null;
+      }
+      setShowNetworkError(false);
+    }
+  }, [pollingError]);
+  useEffect(() => () => { clearTimeout(networkErrorTimerRef.current ?? undefined); }, []);
 
   const me = current.players.find((p) => p.clientId === clientId);
   const myColor = me?.color ?? null;
@@ -464,6 +483,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
       {drag.ghost}
 
       {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
+
+      <NetworkErrorView visible={showNetworkError} />
 
       <ConfirmDialog
         visible={!!confirmDialog}

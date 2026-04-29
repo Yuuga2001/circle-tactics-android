@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import OnlineGame from '../../src/components/OnlineGame';
+import ErrorView from '../../src/components/ErrorView';
 import { clearActiveGame } from '../../src/online/activeGame';
 import type { GameSession } from '../../src/online/types';
 
@@ -21,8 +22,11 @@ export default function PlayingRoute() {
   }, [sessionParam]);
 
   if (!initialSession || !gameId || !clientId) {
-    router.replace('/');
-    return null;
+    return (
+      <ErrorView
+        onBack={() => router.replace('/')}
+      />
+    );
   }
 
   const handleLeave = async () => {
