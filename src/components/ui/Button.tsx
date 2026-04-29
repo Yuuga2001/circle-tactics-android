@@ -9,7 +9,7 @@ import Animated, {
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS, PLAYER_COLORS, PLAYER_BORDER_COLORS } from '../../styles/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'header' | 'play' | 'online' | 'dialogConfirm' | 'dialogCancel';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps {
   title: string;
@@ -142,7 +142,7 @@ function getContainerStyle(variant: ButtonVariant, size: ButtonSize, disabled?: 
 }
 
 function getLabelStyle(variant: ButtonVariant, size: ButtonSize): TextStyle {
-  const fontSize = size === 'sm' ? FONT_SIZE.buttonSm : size === 'lg' ? FONT_SIZE.buttonLg : FONT_SIZE.button;
+  const fontSize = size === 'sm' ? FONT_SIZE.buttonSm : (size === 'lg' || size === 'xl') ? FONT_SIZE.buttonLg : FONT_SIZE.button;
   switch (variant) {
     case 'primary':
     case 'play':
@@ -163,6 +163,7 @@ const sizePaddingMap: Record<ButtonSize, { v: number; h: number }> = {
   sm: { v: 6, h: 14 },
   md: { v: 11, h: 32 },
   lg: { v: 14, h: 44 },
+  xl: { v: 18, h: 52 },
 };
 
 const styles = StyleSheet.create({

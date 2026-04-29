@@ -102,18 +102,17 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
           <Button
             title={t.playLocal}
             variant="play"
-            size="lg"
+            size="xl"
             onPress={() => setMode('local')}
             testID="play-local-btn"
-            style={{ transform: [{ scale: 1.1 }] }}
           />
           <Button
             title={t.playOnline}
             variant="online"
-            size="lg"
+            size="sm"
             onPress={onPlayOnline}
             testID="play-online-btn"
-            style={{ transform: [{ scale: 0.5 }] }}
+            style={{ alignSelf: 'center' }}
           />
 
           <DemoBoard />

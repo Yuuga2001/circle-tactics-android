@@ -46,7 +46,7 @@ interface MenuButtonProps {
 }
 
 const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewGame, onToggleBgm, onToggleSe, bgmMuted: bgmMutedProp, seMuted: seMutedProp }) => {
-  const { t, lang, setLang } = useLang();
+  const { t, lang, isAuto, setLang, setAuto } = useLang();
   const { bgmMuted: bgmMutedHook, seMuted: seMutedHook, setBgmMuted, setSeMuted } = useAudioSettings();
   const bgmMuted = bgmMutedProp !== undefined ? bgmMutedProp : bgmMutedHook;
   const seMuted = seMutedProp !== undefined ? seMutedProp : seMutedHook;
@@ -143,7 +143,12 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                 style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
               >
                 <View style={styles.langRow}>
-                  <Text style={styles.itemText}>🌐 {LANGUAGES[lang]}</Text>
+                  <View>
+                    <Text style={styles.itemText}>🌐 Language</Text>
+                    <Text style={styles.langSubLabel}>
+                      {isAuto ? `Auto · ${LANGUAGES[lang]}` : LANGUAGES[lang]}
+                    </Text>
+                  </View>
                   <Text style={styles.chevron}>›</Text>
                 </View>
               </Pressable>
@@ -197,8 +202,28 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
         <Pressable style={styles.langBackdrop} onPress={() => setLangOpen(false)}>
           <Pressable onPress={(e) => e.stopPropagation()} style={styles.langPanel}>
             <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Follow device setting option */}
+              <Pressable
+                onPress={() => { setAuto(); setLangOpen(false); }}
+                style={({ pressed }) => [
+                  styles.langOption,
+                  isAuto ? styles.langOptionSelected : null,
+                  pressed && !isAuto ? styles.itemPressed : null,
+                ]}
+              >
+                <View style={styles.langAutoRow}>
+                  <View>
+                    <Text style={[styles.langOptionText, isAuto ? styles.langOptionSelectedText : null]}>
+                      Follow device settings
+                    </Text>
+                    <Text style={styles.langAutoSub}>{LANGUAGES[lang]}</Text>
+                  </View>
+                  {isAuto && <Text style={styles.langCheck}>✓</Text>}
+                </View>
+              </Pressable>
+              <View style={styles.langDivider} />
               {(Object.entries(LANGUAGES) as [LangCode, string][]).map(([code, name]) => {
-                const selected = code === lang;
+                const selected = !isAuto && code === lang;
                 return (
                   <Pressable
                     key={code}
@@ -209,9 +234,12 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                       pressed && !selected ? styles.itemPressed : null,
                     ]}
                   >
-                    <Text style={[styles.langOptionText, selected ? styles.langOptionSelectedText : null]}>
-                      {name}
-                    </Text>
+                    <View style={styles.langAutoRow}>
+                      <Text style={[styles.langOptionText, selected ? styles.langOptionSelectedText : null]}>
+                        {name}
+                      </Text>
+                      {selected && <Text style={styles.langCheck}>✓</Text>}
+                    </View>
                   </Pressable>
                 );
               })}
@@ -346,6 +374,34 @@ const styles = StyleSheet.create({
   langOptionSelectedText: {
     fontFamily: FONT_FAMILY.bold,
     color: COLORS.boardFrame,
+  },
+  langSubLabel: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.hint,
+    color: COLORS.textMuted,
+    marginTop: 1,
+  },
+  langAutoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  langAutoSub: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.hint,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  langCheck: {
+    fontSize: 16,
+    color: COLORS.boardFrame,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  langDivider: {
+    height: 1,
+    backgroundColor: 'rgba(141,110,99,0.2)',
+    marginHorizontal: 8,
+    marginVertical: 2,
   },
 });
 

@@ -1327,25 +1327,23 @@ const t: Record<LangCode, T> = {
 
 interface LangContextValue {
   lang: LangCode;
+  isAuto: boolean;
   setLang: (l: LangCode) => void;
+  setAuto: () => void;
   t: T;
 }
 
 const LangContext = createContext<LangContextValue>({
   lang: 'en',
+  isAuto: true,
   setLang: () => {},
+  setAuto: () => {},
   t: t.en,
 });
 
 const LS_KEY = 'circletactics.lang';
 
-async function detectLang(): Promise<LangCode> {
-  try {
-    const saved = await AsyncStorage.getItem(LS_KEY) as LangCode | null;
-    if (saved && saved in LANGUAGES) return saved;
-  } catch {
-    // noop
-  }
+function getDeviceLang(): LangCode {
   try {
     const locales = Localization.getLocales();
     const tag = (locales[0]?.languageTag ?? '').toLowerCase();
@@ -1358,20 +1356,41 @@ async function detectLang(): Promise<LangCode> {
   return 'en';
 }
 
+async function detectLang(): Promise<{ lang: LangCode; isAuto: boolean }> {
+  try {
+    const saved = await AsyncStorage.getItem(LS_KEY) as LangCode | null;
+    if (saved && saved in LANGUAGES) return { lang: saved, isAuto: false };
+  } catch {
+    // noop
+  }
+  return { lang: getDeviceLang(), isAuto: true };
+}
+
 export const LangProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<LangCode>('en');
+  const [isAuto, setIsAuto] = useState(true);
 
   useEffect(() => {
-    detectLang().then(setLangState);
+    detectLang().then(({ lang: l, isAuto: a }) => {
+      setLangState(l);
+      setIsAuto(a);
+    });
   }, []);
 
   const setLang = (l: LangCode) => {
     setLangState(l);
+    setIsAuto(false);
     AsyncStorage.setItem(LS_KEY, l).catch(() => {});
   };
 
+  const setAuto = () => {
+    setIsAuto(true);
+    setLangState(getDeviceLang());
+    AsyncStorage.removeItem(LS_KEY).catch(() => {});
+  };
+
   return (
-    <LangContext.Provider value={{ lang, setLang, t: t[lang] }}>
+    <LangContext.Provider value={{ lang, isAuto, setLang, setAuto, t: t[lang] }}>
       {children}
     </LangContext.Provider>
   );
