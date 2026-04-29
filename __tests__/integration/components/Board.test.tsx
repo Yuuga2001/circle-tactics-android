@@ -117,4 +117,47 @@ describe('Board', () => {
     );
     expect(getByTestId('cell-0-0')).toBeTruthy();
   });
+
+  it('validCells を Set で渡してもボードが表示される', () => {
+    const validCells = new Set(['0-0', '1-1', '2-2']);
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} validCells={validCells} />
+    );
+    expect(getByTestId('cell-0-0')).toBeTruthy();
+    expect(getByTestId('cell-1-1')).toBeTruthy();
+    expect(getByTestId('cell-3-3')).toBeTruthy();
+  });
+
+  it('dragOverCell を指定してもボードが表示される', () => {
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} dragOverCell={{ row: 2, col: 1 }} />
+    );
+    expect(getByTestId('cell-2-1')).toBeTruthy();
+  });
+
+  it('remeasureRef が渡されると ref.current に関数が設定される', () => {
+    const ref = { current: null as (() => void) | null };
+    render(<Board board={emptyBoard} onCellClick={jest.fn()} remeasureRef={ref} />);
+    expect(typeof ref.current).toBe('function');
+  });
+
+  it('winningPlayer を指定してもボードが表示される', () => {
+    const winningCells = [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }];
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} winningCells={winningCells} winningPlayer="RED" />
+    );
+    expect(getByTestId('game-board')).toBeTruthy();
+  });
+
+  it('onCellLayout が指定されていないとき layout イベントで呼ばれない', () => {
+    const { getByTestId } = render(
+      <Board board={emptyBoard} onCellClick={jest.fn()} />
+    );
+    // onCellLayout なしで layout イベントを送っても例外が起きない
+    expect(() =>
+      fireEvent(getByTestId('cell-1-2'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 72, height: 72 } },
+      })
+    ).not.toThrow();
+  });
 });

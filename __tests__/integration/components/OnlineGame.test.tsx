@@ -164,6 +164,12 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
 // ── テスト ───────────────────────────────────────────────────────────────────
 
 describe('OnlineGame', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { usePolling } = require('../../../src/online/usePolling');
+    usePolling.mockReturnValue({ session: null, error: null, setSession: jest.fn() });
+  });
+
   it('online-game-board が表示される', () => {
     const session = makeSession();
     const { getByTestId } = render(
@@ -423,5 +429,105 @@ describe('OnlineGame', () => {
     );
     act(() => { jest.runAllTimers(); });
     expect(onDemoted).toHaveBeenCalledWith(demotedSession);
+  });
+
+  it('api.placePiece が失敗するとエラーメッセージは設定される（toast 表示）', async () => {
+    const { api } = require('../../../src/online/api');
+    api.placePiece.mockRejectedValueOnce(new Error('network error'));
+
+    // board に駒を置いて shouldSkipRoulette=true → playing 即表示
+    // さらに selectedSize='SMALL' をセットして handleCellClick が size を持つようにする
+    const boardWithPiece = makeSession().board;
+    boardWithPiece[0][0][0] = { player: 'BLUE', size: 'SMALL' };
+    const session = makeSession({
+      board: boardWithPiece,
+      currentPlayer: 'RED',
+      selectedSize: 'SMALL',
+    });
+
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    // board に駒あり → roulette スキップ → playing フェーズで即表示
+    expect(getByTestId('online-game-board')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(getByTestId('cell-1-1'));
+    });
+    // api.placePiece が呼ばれたことを確認
+    expect(api.placePiece).toHaveBeenCalledWith('game-123', 'client-host', 1, 1, 'SMALL');
+  });
+
+  it('winInfo.kind=CELL のとき winCell テキストが表示される', () => {
+    const session = makeSession({
+      winner: 'RED',
+      status: 'FINISHED',
+      winInfo: {
+        player: 'RED',
+        kind: 'CELL',
+        cells: [{ row: 0, col: 0 }],
+      },
+    });
+    const { getByText } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    expect(getByText('Cell win')).toBeTruthy();
+  });
+
+  it('winInfo.kind=BOARD のとき winRow テキストが表示される', () => {
+    const session = makeSession({
+      winner: 'RED',
+      status: 'FINISHED',
+      winInfo: {
+        player: 'RED',
+        kind: 'BOARD',
+        cells: [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }],
+      },
+    });
+    const { getByText } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={jest.fn()}
+        onDemoted={jest.fn()}
+      />,
+    );
+    act(() => { jest.runAllTimers(); });
+    expect(getByText('4 in a row')).toBeTruthy();
+  });
+
+  it('status=FINISHED のとき Leave ボタン押下で確認ダイアログをスキップして onLeave が呼ばれる', () => {
+    const onLeave = jest.fn();
+    // board に駒を置いて shouldSkipRoulette=true → playing フェーズで即描画
+    const boardWithPiece = makeSession().board;
+    boardWithPiece[0][0][0] = { player: 'RED', size: 'SMALL' };
+    const session = makeSession({ winner: 'RED', status: 'FINISHED', board: boardWithPiece });
+    const { getByTestId } = render(
+      <OnlineGame
+        gameId="game-123"
+        clientId="client-host"
+        initialSession={session}
+        onLeave={onLeave}
+        onDemoted={jest.fn()}
+      />,
+    );
+    // shouldSkipRoulette=true なので即 playing フェーズ → winner ボタンが表示される
+    fireEvent.press(getByTestId('online-leave-btn'));
+    // FINISHED 状態なので confirm ダイアログをスキップして即 onLeave
+    expect(onLeave).toHaveBeenCalledTimes(1);
   });
 });

@@ -111,4 +111,22 @@ describe('ConfirmDialog', () => {
     fireEvent.press(getByText('OK'));
     expect(onCancel).not.toHaveBeenCalled();
   });
+
+  it('キャンセルボタンの pressIn / pressOut が例外なく動作する', () => {
+    const { getByText } = render(
+      <ConfirmDialog visible message="msg" onConfirm={jest.fn()} onCancel={jest.fn()} />,
+    );
+    const cancelBtn = getByText('Cancel');
+    expect(() => fireEvent(cancelBtn, 'pressIn')).not.toThrow();
+    expect(() => fireEvent(cancelBtn, 'pressOut')).not.toThrow();
+  });
+
+  it('確定ボタンの pressIn / pressOut が例外なく動作する', () => {
+    const { getByText } = render(
+      <ConfirmDialog visible message="msg" onConfirm={jest.fn()} onCancel={jest.fn()} />,
+    );
+    const confirmBtn = getByText('OK');
+    expect(() => fireEvent(confirmBtn, 'pressIn')).not.toThrow();
+    expect(() => fireEvent(confirmBtn, 'pressOut')).not.toThrow();
+  });
 });

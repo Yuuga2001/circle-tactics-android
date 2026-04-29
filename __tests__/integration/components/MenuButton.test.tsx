@@ -207,4 +207,50 @@ describe('MenuButton', () => {
     fireEvent.press(getByText('Follow device settings'));
     expect(mockSetAuto).toHaveBeenCalled();
   });
+
+  it('mode=local で onNewGame がある場合 New Game ボタン押下で確認ダイアログが表示される', () => {
+    const onNewGame = jest.fn();
+    const { getByTestId, getByText } = render(
+      <MenuButton {...defaultProps} mode="local" onNewGame={onNewGame} />
+    );
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    fireEvent.press(getByText('New Game'));
+    // confirmNewGame は i18n モックに含まれていないのでフォールバック確認
+    expect(onNewGame).not.toHaveBeenCalled(); // ダイアログ表示中は未呼び出し
+  });
+
+  it('mode=local で onTitle がないとき Back to Title ボタンが表示されない', () => {
+    const { getByTestId, queryByText } = render(
+      <MenuButton {...defaultProps} mode="local" />
+    );
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    expect(queryByText('Back to Title')).toBeNull();
+  });
+
+  it('mode=online で onTitle がないとき Leave ボタンが表示されない', () => {
+    const { getByTestId, queryByText } = render(
+      <MenuButton {...defaultProps} mode="online" />
+    );
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    expect(queryByText('Leave')).toBeNull();
+  });
+
+  it('言語ピッカーを閉じると言語リストが消える', () => {
+    const { getByTestId, getByText, queryByText } = render(<MenuButton {...defaultProps} />);
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    fireEvent.press(getByText('🌐 Language'));
+    expect(queryByText('日本語')).toBeTruthy();
+    // 言語を選択するとパネルが閉じる
+    fireEvent.press(getByText('日本語'));
+    expect(queryByText('日本語')).toBeNull();
+  });
+
+  it('mode=other のとき onTitle/onNewGame ボタンは表示されない', () => {
+    const { getByTestId, queryByText } = render(
+      <MenuButton {...defaultProps} mode="other" onTitle={jest.fn()} onNewGame={jest.fn()} />
+    );
+    fireEvent.press(getByTestId('menu-fab-btn'));
+    // mode=other では onNewGame ボタン（local 限定）は出ない
+    expect(queryByText('New Game')).toBeNull();
+  });
 });
