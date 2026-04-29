@@ -15,11 +15,12 @@ const PRESS_EASING = Easing.out(Easing.quad);
 function usePressScale(to = 0.93) {
   const s = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
-  const onPressIn = () => { s.value = withTiming(to, { duration: PRESS_IN_DUR, easing: PRESS_EASING }); };
+  const onPressIn = () => { audioManager.play('tap'); s.value = withTiming(to, { duration: PRESS_IN_DUR, easing: PRESS_EASING }); };
   const onPressOut = () => { s.value = withTiming(1, { duration: PRESS_OUT_DUR, easing: PRESS_EASING }); };
   return { style, onPressIn, onPressOut };
 }
 import { LANGUAGES, LangCode, useLang } from '../i18n';
+import { audioManager } from '../audio/audioManager';
 import { useAudioSettings } from '../hooks/useAudioSettings';
 import {
   COLORS,
@@ -140,6 +141,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
               <View style={styles.divider} />
               <Pressable
                 onPress={() => setLangOpen(true)}
+                onPressIn={() => audioManager.play('tap')}
                 style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
               >
                 <View style={styles.langRow}>
@@ -205,6 +207,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
               {/* Follow device setting option */}
               <Pressable
                 onPress={() => { setAuto(); setLangOpen(false); }}
+                onPressIn={() => audioManager.play('tap')}
                 style={({ pressed }) => [
                   styles.langOption,
                   isAuto ? styles.langOptionSelected : null,
@@ -228,6 +231,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                   <Pressable
                     key={code}
                     onPress={() => { setLang(code); setLangOpen(false); }}
+                    onPressIn={() => audioManager.play('tap')}
                     style={({ pressed }) => [
                       styles.langOption,
                       selected ? styles.langOptionSelected : null,

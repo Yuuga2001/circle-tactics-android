@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEY_BGM = 'circletactics.audio.bgmMuted';
 const STORAGE_KEY_SE  = 'circletactics.audio.seMuted';
 
-type SoundName = 'place' | 'select' | 'win' | 'draw' | 'skip' | 'first' | 'roulette';
+type SoundName = 'place' | 'select' | 'win' | 'draw' | 'skip' | 'first' | 'roulette' | 'tap';
 
 const SOUND_FILES: Record<SoundName, number> = {
   place:    require('../../assets/sounds/place.wav'),
@@ -15,6 +15,7 @@ const SOUND_FILES: Record<SoundName, number> = {
   skip:     require('../../assets/sounds/skip.wav'),
   first:    require('../../assets/sounds/first.wav'),
   roulette: require('../../assets/sounds/roulette.wav'),
+  tap:      require('../../assets/sounds/select.wav'),
 };
 
 // Sounds that may be triggered in rapid succession get a pool of players

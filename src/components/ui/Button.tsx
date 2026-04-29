@@ -7,6 +7,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS, PLAYER_COLORS, PLAYER_BORDER_COLORS } from '../../styles/theme';
+import { audioManager } from '../../audio/audioManager';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'header' | 'play' | 'online' | 'dialogConfirm' | 'dialogCancel';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -55,6 +56,7 @@ const Button: React.FC<ButtonProps> = ({
         disabled={disabled}
         onPressIn={() => {
           if (!disabled) {
+            audioManager.play('tap');
             pressScale.value = withTiming(
               variant === 'ghost' ? 0.96 : 0.94,
               { duration: 80, easing: Easing.out(Easing.quad) },

@@ -8,6 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useLang } from '../i18n';
+import { audioManager } from '../audio/audioManager';
 import {
   COLORS,
   FONT_FAMILY,
@@ -64,7 +65,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <Animated.View style={[{ flex: 1 }, cancelAnimStyle]}>
                 <Pressable
                   onPress={onCancel}
-                  onPressIn={() => { cancelScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
+                  onPressIn={() => { audioManager.play('tap'); cancelScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
                   onPressOut={() => { cancelScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) }); }}
                   style={[styles.button, styles.cancel]}
                 >
@@ -74,7 +75,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <Animated.View style={[{ flex: 1 }, confirmAnimStyle]}>
                 <Pressable
                   onPress={onConfirm}
-                  onPressIn={() => { confirmScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
+                  onPressIn={() => { audioManager.play('tap'); confirmScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
                   onPressOut={() => { confirmScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) }); }}
                   style={[styles.button, styles.confirm]}
                 >
