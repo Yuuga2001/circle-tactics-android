@@ -1,5 +1,9 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY_BGM = 'circletactics.audio.bgmMuted';
+const STORAGE_KEY_SE  = 'circletactics.audio.seMuted';
 
 type SoundName = 'place' | 'select' | 'win' | 'draw' | 'skip' | 'first' | 'roulette';
 
@@ -28,6 +32,17 @@ class AudioManager {
   private seMuted = false;
 
   async initialize(): Promise<void> {
+    try {
+      const [bgm, se] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY_BGM),
+        AsyncStorage.getItem(STORAGE_KEY_SE),
+      ]);
+      if (bgm !== null) this.bgmMuted = bgm === 'true';
+      if (se !== null) this.seMuted = se === 'true';
+    } catch {
+      // noop
+    }
+
     try {
       await setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' });
     } catch {
@@ -107,6 +122,7 @@ class AudioManager {
 
   setBgmMuted(muted: boolean): void {
     this.bgmMuted = muted;
+    AsyncStorage.setItem(STORAGE_KEY_BGM, String(muted)).catch(() => {});
     if (muted) {
       this.stopBGM();
     } else {
@@ -116,6 +132,7 @@ class AudioManager {
 
   setSeMuted(muted: boolean): void {
     this.seMuted = muted;
+    AsyncStorage.setItem(STORAGE_KEY_SE, String(muted)).catch(() => {});
   }
 
   getBgmMuted(): boolean {
