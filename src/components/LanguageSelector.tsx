@@ -16,6 +16,7 @@ const LanguageSelector: React.FC = () => {
 
   const scale = useSharedValue(0.6);
   const opacity = useSharedValue(0);
+  const triggerScale = useSharedValue(1);
 
   const openMenu = () => {
     setOpen(true);
@@ -36,16 +37,28 @@ const LanguageSelector: React.FC = () => {
     opacity: opacity.value,
   }));
 
+  const triggerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: triggerScale.value }],
+  }));
+
   return (
     <>
-      <Pressable
-        onPress={() => (open ? closeMenu() : openMenu())}
-        style={[styles.trigger, SHADOWS.subtle]}
-      >
-        <Text style={styles.globe}>🌐</Text>
-        <Text style={styles.current}>Language</Text>
-        <Text style={styles.chevron}>{open ? '▲' : '▼'}</Text>
-      </Pressable>
+      <Animated.View style={triggerAnimStyle}>
+        <Pressable
+          onPress={() => (open ? closeMenu() : openMenu())}
+          onPressIn={() => {
+            triggerScale.value = withTiming(0.92, { duration: 80, easing: Easing.out(Easing.quad) });
+          }}
+          onPressOut={() => {
+            triggerScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+          }}
+          style={[styles.trigger, SHADOWS.subtle]}
+        >
+          <Text style={styles.globe}>🌐</Text>
+          <Text style={styles.current}>Language</Text>
+          <Text style={styles.chevron}>{open ? '▲' : '▼'}</Text>
+        </Pressable>
+      </Animated.View>
 
       <Modal visible={open} transparent animationType="none" onRequestClose={closeMenu}>
         <Pressable style={styles.backdrop} onPress={closeMenu}>

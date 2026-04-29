@@ -1,18 +1,21 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
 import LanguageSelector from './LanguageSelector';
 import MenuButton, { MenuMode } from './MenuButton';
 import { api } from '../online/api';
 import { clearActiveGame } from '../online/activeGame';
 import { getClientId } from '../online/clientId';
+import { COLORS, FONT_FAMILY, FONT_SIZE } from '../styles/theme';
 
 /**
- * Persistent chrome (LanguageSelector top-left, MenuButton top-right) shown on
- * top of every route — matches the Web app where these live in App.tsx outside
- * the route switch.
+ * Persistent chrome shown on top of every route.
+ * - Title screen : LanguageSelector (left) + メニュー (right)
+ * - During play  : App title (left)       + メニュー (right)
  */
 const AppChrome: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const segments = useSegments() as string[];
   const top: string = segments[0] ?? '';
@@ -23,13 +26,12 @@ const AppChrome: React.FC = () => {
   else if (top === 'local') mode = 'local';
   else if (top === 'online' && second === 'playing') mode = 'online';
 
+  const isPlaying = mode === 'local' || mode === 'online';
+
   const goTitle = async () => {
     if (mode === 'online') {
       try {
         const clientId = await getClientId();
-        // Best-effort leave — segments give us no gameId here, so we just clear
-        // local state and navigate; the OnlineGame screen handles its own leave
-        // confirm before unmount when reachable.
         await clearActiveGame();
         void clientId;
       } catch { /* noop */ }
@@ -37,13 +39,19 @@ const AppChrome: React.FC = () => {
     router.replace('/');
   };
 
+  const topOffset = insets.top + 8;
+
   return (
     <View style={styles.overlay} pointerEvents="box-none">
-      <View style={styles.left} pointerEvents="box-none">
-        <LanguageSelector />
+      <View style={[styles.left, { top: topOffset }]} pointerEvents="box-none">
+        {isPlaying ? (
+          <Text style={styles.appTitle}>CircleTactics</Text>
+        ) : (
+          <LanguageSelector />
+        )}
       </View>
-      <View style={styles.right} pointerEvents="box-none">
-        <MenuButton mode={mode} onTitle={mode === 'title' ? undefined : goTitle} />
+      <View style={[styles.right, { top: topOffset }]} pointerEvents="box-none">
+        <MenuButton mode={mode} onTitle={isPlaying ? goTitle : undefined} />
       </View>
     </View>
   );
@@ -60,13 +68,18 @@ const styles = StyleSheet.create({
   },
   left: {
     position: 'absolute',
-    top: 12,
     left: 12,
   },
   right: {
     position: 'absolute',
-    top: 12,
     right: 12,
+  },
+  appTitle: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.boardFrame,
+    letterSpacing: 1,
+    paddingVertical: 7,
   },
 });
 

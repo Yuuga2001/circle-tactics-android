@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal, PanResponder, StyleSheet, View } from 'react-native';
 import type { PieceSize, Player, HandState } from '../types';
+import {
+  BOARD_GAP,
+  PIECE_SIZE_RATIO,
+  PLAYER_BORDER_COLORS,
+  PLAYER_COLORS,
+} from '../styles/theme';
 
-interface CellLayout {
-  row: number;
-  col: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+export interface BoardLayout {
+  pageX: number;
+  pageY: number;
+  cellSize: number;
 }
 
 interface Options {
@@ -16,55 +20,146 @@ interface Options {
   enabled: boolean;
   onSelectSize: (size: PieceSize) => void;
   onPlace: (row: number, col: number) => void;
-  cellLayouts?: CellLayout[];
+  boardLayout?: BoardLayout | null;
+  remeasureBoard?: () => void;
 }
 
 export interface BoardDragApi {
   draggingSize: PieceSize | null;
   hoverCell: { row: number; col: number } | null;
-  /** Returned to PlayerHand to attach long-press / pointer handlers. */
   bindPiecePointerDown: (size: PieceSize) => Record<string, unknown>;
-  /** Legacy alias kept for tests. */
   bindLongPress: (size: PieceSize) => Record<string, unknown>;
-  ghost: null;
+  ghost: React.ReactNode;
 }
 
-/**
- * Drag-to-place support for the bottom hand.
- *
- * This is a simplified RN port of the Web `useBoardDrag` hook. On Android we
- * primarily rely on tap-to-select + tap-to-place, but we still expose the same
- * interface (`bindPiecePointerDown`, `draggingSize`, `hoverCell`) so call sites
- * stay aligned with the Web app.
- */
-export function useBoardDrag({ enabled, hand, onSelectSize }: Options): BoardDragApi {
-  const [draggingSize, setDraggingSize] = useState<PieceSize | null>(null);
-  const [hoverCell] = useState<{ row: number; col: number } | null>(null);
+const DRAG_THRESHOLD_SQ = 8 * 8;
+const PIECE_SIZES: PieceSize[] = ['SMALL', 'MEDIUM', 'LARGE'];
+
+function findCellAt(
+  px: number,
+  py: number,
+  layout: BoardLayout,
+): { row: number; col: number } | null {
+  const rx = px - layout.pageX;
+  const ry = py - layout.pageY;
+  const boardSize = 4 * layout.cellSize + 3 * BOARD_GAP;
+  if (rx < 0 || ry < 0 || rx > boardSize || ry > boardSize) return null;
+  const step = layout.cellSize + BOARD_GAP;
+  // BOARD_GAP/2 のオフセットでギャップ中央を境界とし、最近傍セルに吸い付かせる
+  const col = Math.min(3, Math.floor((rx + BOARD_GAP / 2) / step));
+  const row = Math.min(3, Math.floor((ry + BOARD_GAP / 2) / step));
+  return { row, col };
+}
+
+export function useBoardDrag(options: Options): BoardDragApi {
+  // optsRef lets PanResponder callbacks always read fresh options without recreating responders.
+  const optsRef = useRef(options);
+  optsRef.current = options;
+
+  const [dragState, setDragState] = useState<{
+    size: PieceSize;
+    x: number;
+    y: number;
+    hoverCell: { row: number; col: number } | null;
+  } | null>(null);
+
+  const draggingRef = useRef(false);
 
   useEffect(() => {
-    if (!enabled) setDraggingSize(null);
-  }, [enabled]);
+    if (!options.enabled) {
+      draggingRef.current = false;
+      setDragState(null);
+    }
+  }, [options.enabled]);
 
-  const bind = useCallback(
-    (size: PieceSize) => {
-      if (!enabled || hand[size] <= 0) return {};
-      return {
-        onLongPress: () => {
-          onSelectSize(size);
-          setDraggingSize(size);
-          // Drag is purely visual feedback; tap on cell still places.
-          setTimeout(() => setDraggingSize(null), 250);
-        },
-      } as Record<string, unknown>;
-    },
-    [enabled, hand, onSelectSize],
+  const panResponders = useRef(
+    PIECE_SIZES.reduce(
+      (acc, size) => {
+        acc[size] = PanResponder.create({
+          onStartShouldSetPanResponder: () =>
+            optsRef.current.enabled && optsRef.current.hand[size] > 0,
+          onMoveShouldSetPanResponder: () => false,
+          onPanResponderGrant: () => {
+            draggingRef.current = false;
+          },
+          onPanResponderMove: (evt, gs) => {
+            if (!draggingRef.current && gs.dx * gs.dx + gs.dy * gs.dy < DRAG_THRESHOLD_SQ) return;
+            const { pageX, pageY } = evt.nativeEvent;
+            if (!draggingRef.current) {
+              draggingRef.current = true;
+              optsRef.current.onSelectSize(size);
+              // ドラッグ開始時にボード座標を再計測（スクロール後のズレを補正）
+              optsRef.current.remeasureBoard?.();
+            }
+            const hoverCell = optsRef.current.boardLayout
+              ? findCellAt(pageX, pageY, optsRef.current.boardLayout)
+              : null;
+            setDragState({ size, x: pageX, y: pageY, hoverCell });
+          },
+          onPanResponderRelease: (evt) => {
+            if (!draggingRef.current) {
+              optsRef.current.onSelectSize(size);
+            } else {
+              const { pageX, pageY } = evt.nativeEvent;
+              const hoverCell = optsRef.current.boardLayout
+                ? findCellAt(pageX, pageY, optsRef.current.boardLayout)
+                : null;
+              if (hoverCell) {
+                optsRef.current.onPlace(hoverCell.row, hoverCell.col);
+              }
+            }
+            draggingRef.current = false;
+            setDragState(null);
+          },
+          onPanResponderTerminate: () => {
+            draggingRef.current = false;
+            setDragState(null);
+          },
+        });
+        return acc;
+      },
+      {} as Record<PieceSize, ReturnType<typeof PanResponder.create>>,
+    ),
   );
 
+  const bindPiecePointerDown = (size: PieceSize): Record<string, unknown> => {
+    if (!options.enabled || options.hand[size] <= 0) return {};
+    return panResponders.current[size].panHandlers as Record<string, unknown>;
+  };
+
+  const ghost = dragState ? (
+    <Modal transparent animationType="none" visible statusBarTranslucent>
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        {(() => {
+          const { player } = optsRef.current;
+          const cs = optsRef.current.boardLayout?.cellSize ?? 68;
+          const dia = cs * PIECE_SIZE_RATIO[dragState.size];
+          return (
+            <View
+              style={{
+                position: 'absolute',
+                left: dragState.x - dia / 2,
+                top: dragState.y - dia / 2,
+                width: dia,
+                height: dia,
+                borderRadius: dia / 2,
+                backgroundColor: PLAYER_COLORS[player],
+                borderWidth: 3,
+                borderColor: PLAYER_BORDER_COLORS[player],
+                opacity: 0.85,
+              }}
+            />
+          );
+        })()}
+      </View>
+    </Modal>
+  ) : null;
+
   return {
-    draggingSize,
-    hoverCell,
-    bindPiecePointerDown: bind,
-    bindLongPress: bind,
-    ghost: null,
+    draggingSize: dragState?.size ?? null,
+    hoverCell: dragState?.hoverCell ?? null,
+    bindPiecePointerDown,
+    bindLongPress: bindPiecePointerDown,
+    ghost,
   };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import { View } from 'react-native';
 import { useBoardDrag } from '../../../src/components/useBoardDrag';
 
@@ -13,7 +13,6 @@ function TestComponent({ enabled = true }: { enabled?: boolean }) {
     enabled,
     onSelectSize: mockOnSelectSize,
     onPlace: mockOnPlace,
-    cellLayouts: [],
   });
 
   const handlers = bindLongPress('SMALL');
@@ -60,7 +59,6 @@ describe('useBoardDrag', () => {
         enabled: true,
         onSelectSize: mockOnSelectSize,
         onPlace: mockOnPlace,
-        cellLayouts: [],
       });
       return null;
     }

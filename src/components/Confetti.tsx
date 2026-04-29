@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withDelay,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 
@@ -35,6 +36,10 @@ const ConfettiPiece: React.FC<ConfettiPieceProps> = ({ left, delay, color, heigh
       delay,
       withRepeat(withTiming(360, { duration: 4000, easing: Easing.linear }), -1, false),
     );
+    return () => {
+      cancelAnimation(ty);
+      cancelAnimation(rot);
+    };
   }, [delay, height, rot, ty]);
 
   const style = useAnimatedStyle(() => ({

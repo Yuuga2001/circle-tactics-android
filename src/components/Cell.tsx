@@ -53,6 +53,7 @@ const Cell: React.FC<CellProps> = ({
       cancelAnimation(validPulse);
       validPulse.value = withTiming(0, { duration: 200 });
     }
+    return () => cancelAnimation(validPulse);
   }, [isValid, isWinning, validPulse]);
 
   // win-pulse: 1.1s ease-in-out infinite (gold glow)
@@ -67,6 +68,7 @@ const Cell: React.FC<CellProps> = ({
       cancelAnimation(winPulse);
       winPulse.value = withTiming(0, { duration: 200 });
     }
+    return () => cancelAnimation(winPulse);
   }, [isWinning, winPulse]);
 
   const animatedContainer = useAnimatedStyle(() => {

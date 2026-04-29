@@ -155,7 +155,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     enabled: isMyTurn && phase === 'playing',
     onSelectSize: handleSelectSize,
     onPlace: handleCellClick,
-    cellLayouts: [],
+    boardLayout: null,
   });
 
   const handleRestart = async () => {

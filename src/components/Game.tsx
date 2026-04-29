@@ -12,7 +12,7 @@ import Button from './ui/Button';
 import ScreenContainer from './ui/ScreenContainer';
 import AnnounceOverlay from './AnnounceOverlay';
 import Confetti from './Confetti';
-import { useBoardDrag } from './useBoardDrag';
+import { useBoardDrag, BoardLayout } from './useBoardDrag';
 import {
   COLORS,
   FONT_FAMILY,
@@ -139,6 +139,9 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     prevPieceCountRef.current = pieceCount;
   }, [pieceCount, phase, play]);
 
+  const [isExiting, setIsExiting] = useState(false);
+  const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
+  const boardRemeasureRef = useRef<(() => void) | null>(null);
   const interactionAllowed = phase === 'playing' && isCurrentHuman && !winner;
 
   const validCells = useMemo((): { row: number; col: number }[] | undefined => {
@@ -172,7 +175,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     enabled: interactionAllowed,
     onSelectSize: handleSelectSize,
     onPlace: handleCellClick,
-    cellLayouts: [],
+    boardLayout,
+    remeasureBoard: () => boardRemeasureRef.current?.(),
   });
 
   const handleRestart = () => {
@@ -183,7 +187,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   };
 
   const handleReturnToTitle = () => {
-    dispatch({ type: 'RETURN_TO_TITLE' });
+    setIsExiting(true);
+    setTimeout(() => dispatch({ type: 'RETURN_TO_TITLE' }), 100);
   };
 
   // Re-arm roulette on new game
@@ -218,6 +223,10 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   const victoryOverlay: PlayerKey | null =
     winner && winner !== 'DRAW' ? (winner as PlayerKey) : null;
 
+  if (isExiting) {
+    return <ScreenContainer victoryOverlay={null}>{null}</ScreenContainer>;
+  }
+
   return (
     <ScreenContainer victoryOverlay={victoryOverlay}>
       {winner && winner !== 'DRAW' && <Confetti />}
@@ -225,12 +234,9 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScrollEndDrag={() => boardRemeasureRef.current?.()}
+        onMomentumScrollEnd={() => boardRemeasureRef.current?.()}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>CircleTactics</Text>
-        </View>
-
         <HandsSummary
           hands={hands}
           players={turnOrder}
@@ -247,6 +253,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
             winningPlayer={winInfo?.player ?? null}
             validCells={validCells}
             dragOverCell={drag.hoverCell}
+            onBoardLayout={setBoardLayout}
+            remeasureRef={boardRemeasureRef}
           />
           {phase === 'announcing' && (
             <AnnounceOverlay
@@ -296,6 +304,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
               variant="full"
               interactive={interactionAllowed}
               draggingSize={drag.draggingSize}
+              bindPiecePointerDown={drag.bindPiecePointerDown}
               label={
                 phase !== 'playing'
                   ? ' '
@@ -317,6 +326,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
           </View>
         )}
       </ScrollView>
+      {drag.ghost}
     </ScreenContainer>
   );
 };
@@ -325,21 +335,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 8,
+    paddingTop: 56,
     gap: 8,
-  },
-  header: {
-    paddingTop: 4,
-    paddingBottom: 8,
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.titleSm,
-    color: COLORS.boardFrame,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255,255,255,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
   boardArea: {
     width: '100%',

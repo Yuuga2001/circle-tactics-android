@@ -1,6 +1,16 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppChrome from '../../../src/components/AppChrome';
+
+const TEST_METRICS = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+};
+
+function renderWithSafeArea(ui: React.ReactElement) {
+  return render(<SafeAreaProvider initialMetrics={TEST_METRICS}>{ui}</SafeAreaProvider>);
+}
 
 const mockReplace = jest.fn();
 
@@ -66,38 +76,50 @@ describe('AppChrome', () => {
   });
 
   it('LanguageSelector のトリガーが表示される', () => {
-    const { getByText } = render(<AppChrome />);
+    const { getByText } = renderWithSafeArea(<AppChrome />);
     expect(getByText('Language')).toBeTruthy();
   });
 
-  it('segments が空（タイトル画面）のとき MenuButton は非表示', () => {
+  it('segments が空（タイトル画面）でも MenuButton は常時表示される', () => {
     useSegments.mockReturnValue([]);
-    const { queryByTestId } = render(<AppChrome />);
-    // mode=title のとき MenuButton は null を返す
-    expect(queryByTestId('menu-fab-btn')).toBeNull();
+    const { getByTestId } = renderWithSafeArea(<AppChrome />);
+    expect(getByTestId('menu-fab-btn')).toBeTruthy();
   });
 
   it('segments が ["local"] のとき MenuButton が表示される', () => {
     useSegments.mockReturnValue(['local']);
-    const { getByTestId } = render(<AppChrome />);
+    const { getByTestId } = renderWithSafeArea(<AppChrome />);
     expect(getByTestId('menu-fab-btn')).toBeTruthy();
   });
 
   it('segments が ["online", "playing"] のとき MenuButton が表示される', () => {
     useSegments.mockReturnValue(['online', 'playing']);
-    const { getByTestId } = render(<AppChrome />);
+    const { getByTestId } = renderWithSafeArea(<AppChrome />);
     expect(getByTestId('menu-fab-btn')).toBeTruthy();
   });
 
   it('segments が ["settings"] のとき mode=other で MenuButton が表示される', () => {
     useSegments.mockReturnValue(['settings']);
-    const { getByTestId } = render(<AppChrome />);
+    const { getByTestId } = renderWithSafeArea(<AppChrome />);
     expect(getByTestId('menu-fab-btn')).toBeTruthy();
   });
 
-  it('segments が ["index"] のとき MenuButton は非表示', () => {
+  it('segments が ["index"] のとき MenuButton は常時表示される', () => {
     useSegments.mockReturnValue(['index']);
-    const { queryByTestId } = render(<AppChrome />);
-    expect(queryByTestId('menu-fab-btn')).toBeNull();
+    const { getByTestId } = renderWithSafeArea(<AppChrome />);
+    expect(getByTestId('menu-fab-btn')).toBeTruthy();
+  });
+
+  it('プレイ中（local）は左側にアプリタイトルが表示される', () => {
+    useSegments.mockReturnValue(['local']);
+    const { getByText, queryByText } = renderWithSafeArea(<AppChrome />);
+    expect(getByText('CircleTactics')).toBeTruthy();
+    expect(queryByText('Language')).toBeNull();
+  });
+
+  it('タイトル画面では左側に LanguageSelector が表示される', () => {
+    useSegments.mockReturnValue([]);
+    const { getByText } = renderWithSafeArea(<AppChrome />);
+    expect(getByText('Language')).toBeTruthy();
   });
 });

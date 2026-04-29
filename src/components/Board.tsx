@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { BoardState, Player } from '../types';
 import { COLORS, RADIUS, SHADOWS, BOARD_GAP, BOARD_PADDING } from '../styles/theme';
 import Cell from './Cell';
+
+interface BoardLayoutInfo {
+  pageX: number;
+  pageY: number;
+  cellSize: number;
+}
 
 interface BoardProps {
   board: BoardState;
@@ -12,6 +18,9 @@ interface BoardProps {
   validCells?: Set<string> | { row: number; col: number }[] | null;
   dragOverCell?: { row: number; col: number } | null;
   onCellLayout?: (row: number, col: number, x: number, y: number, w: number, h: number) => void;
+  onBoardLayout?: (layout: BoardLayoutInfo) => void;
+  // 外部からリクエストされたら再計測する ref
+  remeasureRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -22,11 +31,32 @@ const Board: React.FC<BoardProps> = ({
   validCells,
   dragOverCell,
   onCellLayout,
+  onBoardLayout,
+  remeasureRef,
 }) => {
   const [boardW, setBoardW] = useState(0);
+  const gridRef = useRef<View>(null);
+
+  // measureInWindow はタッチイベントと同じウィンドウ座標系を返す（measure() はステータスバー分ずれる場合あり）
+  const doMeasure = useCallback(() => {
+    if (!onBoardLayout || !gridRef.current) return;
+    gridRef.current.measureInWindow((x, y, width) => {
+      if (width > 0) {
+        const cs = Math.floor((width - BOARD_GAP * 3) / 4);
+        onBoardLayout({ pageX: x, pageY: y, cellSize: cs });
+      }
+    });
+  }, [onBoardLayout]);
+
+  // 外部から再計測を呼び出せるよう ref に登録
+  useEffect(() => {
+    if (remeasureRef) remeasureRef.current = doMeasure;
+  }, [remeasureRef, doMeasure]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
-    setBoardW(e.nativeEvent.layout.width);
+    const w = e.nativeEvent.layout.width;
+    setBoardW(w);
+    setTimeout(doMeasure, 0);
   };
 
   // boardW is the grid's own width (already inside border + padding of outer),
@@ -48,7 +78,7 @@ const Board: React.FC<BoardProps> = ({
 
   return (
     <View testID="game-board" style={[styles.outer, SHADOWS.board]}>
-      <View style={styles.grid} onLayout={handleLayout}>
+      <View ref={gridRef} style={styles.grid} onLayout={handleLayout}>
         {board.map((rowCells, rowIndex) => (
           <View key={rowIndex} style={[styles.row, rowIndex < 3 ? { marginBottom: BOARD_GAP } : null]}>
             {rowCells.map((cell, colIndex) => (

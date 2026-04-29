@@ -119,31 +119,11 @@ export const RADIUS = {
 } as const;
 
 export const SHADOWS = {
-  subtle: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
-    android: { elevation: 2 },
-    default: {},
-  }) as any,
-  standard: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12 },
-    android: { elevation: 5 },
-    default: {},
-  }) as any,
-  elevated: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.22, shadowRadius: 16 },
-    android: { elevation: 8 },
-    default: {},
-  }) as any,
-  board: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
-    android: { elevation: 10 },
-    default: {},
-  }) as any,
-  announce: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 30 },
-    android: { elevation: 14 },
-    default: {},
-  }) as any,
+  subtle: {} as any,
+  standard: {} as any,
+  elevated: {} as any,
+  board: {} as any,
+  announce: {} as any,
 } as const;
 
 export const CELL_SIZE = 72;

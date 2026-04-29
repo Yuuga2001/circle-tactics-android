@@ -1,5 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { Player, PLAYERS } from '../types';
 import { DEFAULT_HUMAN_FLAGS } from '../logic/seating';
 import { useLang } from '../i18n';
@@ -16,6 +22,35 @@ import {
 import ScreenContainer from './ui/ScreenContainer';
 import Button from './ui/Button';
 import DemoBoard from './DemoBoard';
+
+const AnimSeatCard: React.FC<{
+  disabled: boolean;
+  onPress: () => void;
+  style: object[];
+  children: React.ReactNode;
+  testID: string;
+}> = ({ disabled, onPress, style, children, testID }) => {
+  const s = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  return (
+    <Animated.View style={anim}>
+      <Pressable
+        testID={testID}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={() => {
+          if (!disabled) s.value = withTiming(0.95, { duration: 80, easing: Easing.out(Easing.quad) });
+        }}
+        onPressOut={() => {
+          s.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+        }}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 interface TitleScreenProps {
   onPlayLocal: (humanPlayers: Player[]) => void;
@@ -96,19 +131,18 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
               const dark = PLAYER_BORDER_COLORS[p];
               const tint = PLAYER_SEAT_TINT[p];
               return (
-                <Pressable
+                <AnimSeatCard
                   key={p}
                   testID={`seat-toggle-${p}`}
                   disabled={isLastHuman}
                   onPress={() => toggleRole(p)}
-                  style={({ pressed }) => [
+                  style={[
                     styles.seatCard,
                     role === 'HUMAN'
                       ? { borderColor: dark, backgroundColor: tint, ...SHADOWS.subtle }
                       : { borderColor: 'rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.7)', opacity: 0.85 },
                     role === 'HUMAN' ? styles.seatActive : null,
                     isLastHuman ? styles.seatLocked : null,
-                    pressed && !isLastHuman ? { transform: [{ translateY: 1 }, { scale: 0.99 }] } : null,
                   ]}
                 >
                   <View style={styles.seatHeader}>
@@ -121,7 +155,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
                       {role === 'HUMAN' ? t.playerLabel : t.aiLabel}
                     </Text>
                   </View>
-                </Pressable>
+                </AnimSeatCard>
               );
             })}
           </View>

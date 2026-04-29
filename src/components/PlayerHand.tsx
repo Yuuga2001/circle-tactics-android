@@ -1,5 +1,11 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { Player, PieceSize, HandState, SIZES } from '../types';
 import {
   COLORS,
@@ -23,6 +29,37 @@ interface PlayerHandProps {
   draggingSize?: PieceSize | null;
   bindPiecePointerDown?: (size: PieceSize) => Record<string, unknown>;
 }
+
+const AnimPieceBtn: React.FC<{
+  testID: string;
+  disabled: boolean;
+  selected: boolean;
+  onPress: () => void;
+  containerStyle: ViewStyle[];
+  children: React.ReactNode;
+}> = ({ testID, disabled, selected, onPress, containerStyle, children }) => {
+  const s = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  return (
+    <Animated.View style={[anim, { flex: 1 }]}>
+      <Pressable
+        testID={testID}
+        disabled={disabled}
+        accessibilityState={{ selected }}
+        onPress={onPress}
+        onPressIn={() => {
+          if (!disabled) s.value = withTiming(0.93, { duration: 80, easing: Easing.out(Easing.quad) });
+        }}
+        onPressOut={() => {
+          s.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+        }}
+        style={containerStyle}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 const PREVIEW_SIZE: Record<PieceSize, number> = {
   SMALL: 20,
@@ -70,27 +107,13 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
 
           const dia = PREVIEW_SIZE[size];
 
-          const extraHandlers = isInteractive && count > 0 && bindPiecePointerDown
+          const dragHandlers = isInteractive && count > 0 && bindPiecePointerDown
             ? bindPiecePointerDown(size)
-            : {};
+            : null;
+          const hasDrag = dragHandlers && Object.keys(dragHandlers).length > 0;
 
-          return (
-            <Pressable
-              key={size}
-              testID={`size-btn-${size}`}
-              disabled={isDisabled}
-              accessibilityState={{ selected: isSelected }}
-              onPress={() => {
-                if (!isDisabled) onSelectSize(size);
-              }}
-              style={({ pressed }) => [
-                ...containerStyle,
-                pressed && !isDisabled
-                  ? { transform: [{ scale: 0.96 }, { translateY: 2 }], backgroundColor: 'rgba(255,193,7,0.18)' }
-                  : null,
-              ]}
-              {...(extraHandlers as object)}
-            >
+          const pieceContent = (
+            <>
               <View
                 testID={`piece-preview-${size}`}
                 style={{
@@ -104,7 +127,37 @@ const PlayerHand: React.FC<PlayerHandProps> = ({
                 }}
               />
               <Text style={styles.pieceCount}>x {count}</Text>
-            </Pressable>
+            </>
+          );
+
+          // Pressable と PanResponder のタッチ競合を避けるため、
+          // ドラッグ有効時は View + panHandlers のみ使用。タップは PanResponder の release で処理。
+          if (hasDrag) {
+            return (
+              <View
+                key={size}
+                testID={`size-btn-${size}`}
+                accessible
+                accessibilityState={{ selected: isSelected }}
+                style={containerStyle}
+                {...(dragHandlers as object)}
+              >
+                {pieceContent}
+              </View>
+            );
+          }
+
+          return (
+            <AnimPieceBtn
+              key={size}
+              testID={`size-btn-${size}`}
+              disabled={isDisabled}
+              selected={isSelected}
+              onPress={() => { if (!isDisabled) onSelectSize(size); }}
+              containerStyle={containerStyle}
+            >
+              {pieceContent}
+            </AnimPieceBtn>
           );
         })}
       </View>

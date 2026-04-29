@@ -1,13 +1,11 @@
 import React from 'react';
-import {
-  Pressable,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-  PressableStateCallbackType,
-} from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS, PLAYER_COLORS, PLAYER_BORDER_COLORS } from '../../styles/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'header' | 'play' | 'online' | 'dialogConfirm' | 'dialogCancel';
@@ -38,25 +36,42 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const containerBase = getContainerStyle(variant, size, disabled);
   const labelBase = getLabelStyle(variant, size);
+  const pressScale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
 
   return (
-    <Pressable
-      testID={testID}
-      onPress={onPress}
-      disabled={disabled}
-      style={(state: PressableStateCallbackType) => [
-        styles.base,
-        containerBase,
-        fullWidth ? { alignSelf: 'stretch' } : null,
-        state.pressed && !disabled ? activeStyleFor(variant) : null,
+    <Animated.View
+      style={[
+        animStyle,
+        fullWidth ? { alignSelf: 'stretch' as const } : null,
         style,
       ]}
-      android_disableSound={false}
     >
-      <Text style={[styles.label, labelBase, textStyle]} numberOfLines={1}>
-        {title}
-      </Text>
-    </Pressable>
+      <Pressable
+        testID={testID}
+        onPress={onPress}
+        disabled={disabled}
+        onPressIn={() => {
+          if (!disabled) {
+            pressScale.value = withTiming(
+              variant === 'ghost' ? 0.96 : 0.94,
+              { duration: 80, easing: Easing.out(Easing.quad) },
+            );
+          }
+        }}
+        onPressOut={() => {
+          pressScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+        }}
+        style={[styles.base, containerBase]}
+        android_disableSound={false}
+      >
+        <Text style={[styles.label, labelBase, textStyle]} numberOfLines={1}>
+          {title}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -142,11 +157,6 @@ function getLabelStyle(variant: ButtonVariant, size: ButtonSize): TextStyle {
     case 'dialogCancel':
       return { fontSize, color: '#555' };
   }
-}
-
-function activeStyleFor(variant: ButtonVariant): ViewStyle {
-  if (variant === 'ghost') return { opacity: 0.55 };
-  return { transform: [{ scale: 0.97 }, { translateY: 1 }], opacity: 0.92 };
 }
 
 const sizePaddingMap: Record<ButtonSize, { v: number; h: number }> = {

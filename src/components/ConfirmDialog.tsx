@@ -36,6 +36,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   const { t } = useLang();
   const scale = useSharedValue(0.6);
+  const cancelScale = useSharedValue(1);
+  const confirmScale = useSharedValue(1);
 
   useEffect(() => {
     if (visible) {
@@ -49,6 +51,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [visible, scale]);
 
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const cancelAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: cancelScale.value }] }));
+  const confirmAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: confirmScale.value }] }));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -57,26 +61,26 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Animated.View style={[styles.card, SHADOWS.elevated, cardStyle]}>
             <Text style={styles.message}>{message}</Text>
             <View style={styles.buttons}>
-              <Pressable
-                onPress={onCancel}
-                style={({ pressed }) => [
-                  styles.button,
-                  styles.cancel,
-                  pressed && { transform: [{ scale: 0.96 }] },
-                ]}
-              >
-                <Text style={styles.cancelText}>{cancelLabel ?? t.cancel}</Text>
-              </Pressable>
-              <Pressable
-                onPress={onConfirm}
-                style={({ pressed }) => [
-                  styles.button,
-                  styles.confirm,
-                  pressed && { transform: [{ scale: 0.96 }] },
-                ]}
-              >
-                <Text style={styles.confirmText}>{confirmLabel ?? t.ok}</Text>
-              </Pressable>
+              <Animated.View style={[{ flex: 1 }, cancelAnimStyle]}>
+                <Pressable
+                  onPress={onCancel}
+                  onPressIn={() => { cancelScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
+                  onPressOut={() => { cancelScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) }); }}
+                  style={[styles.button, styles.cancel]}
+                >
+                  <Text style={styles.cancelText}>{cancelLabel ?? t.cancel}</Text>
+                </Pressable>
+              </Animated.View>
+              <Animated.View style={[{ flex: 1 }, confirmAnimStyle]}>
+                <Pressable
+                  onPress={onConfirm}
+                  onPressIn={() => { confirmScale.value = withTiming(0.94, { duration: 80, easing: Easing.out(Easing.quad) }); }}
+                  onPressOut={() => { confirmScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) }); }}
+                  style={[styles.button, styles.confirm]}
+                >
+                  <Text style={styles.confirmText}>{confirmLabel ?? t.ok}</Text>
+                </Pressable>
+              </Animated.View>
             </View>
           </Animated.View>
         </Pressable>

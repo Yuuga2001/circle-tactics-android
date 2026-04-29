@@ -7,6 +7,18 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+
+const PRESS_IN_DUR = 80;
+const PRESS_OUT_DUR = 150;
+const PRESS_EASING = Easing.out(Easing.quad);
+
+function usePressScale(to = 0.93) {
+  const s = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  const onPressIn = () => { s.value = withTiming(to, { duration: PRESS_IN_DUR, easing: PRESS_EASING }); };
+  const onPressOut = () => { s.value = withTiming(1, { duration: PRESS_OUT_DUR, easing: PRESS_EASING }); };
+  return { style, onPressIn, onPressOut };
+}
 import { useLang } from '../i18n';
 import { useAudioSettings } from '../hooks/useAudioSettings';
 import {
@@ -63,8 +75,6 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
     opacity: panelOpacity.value,
   }));
 
-  if (mode === 'title') return null;
-
   const handleTitle = () => {
     if (!onTitle) return;
     const msg = mode === 'online' ? t.confirmLeaveOnline : t.confirmLeave;
@@ -78,58 +88,84 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
 
   const titleLabel = mode === 'online' ? t.leaveOnline : t.titleBtn;
 
+  const fab = usePressScale(0.92);
+  const titleItem = usePressScale(0.95);
+  const newGameItem = usePressScale(0.95);
+  const bgmBtn = usePressScale(0.90);
+  const seBtn = usePressScale(0.90);
+
   return (
     <>
-      <Pressable
-        testID="menu-fab-btn"
-        onPress={() => (open ? closePanel() : openPanel())}
-        style={[styles.fab, SHADOWS.standard]}
-      >
-        <Text style={styles.fabIcon}>≡</Text>
-      </Pressable>
+      <Animated.View style={fab.style}>
+        <Pressable
+          testID="menu-fab-btn"
+          onPress={() => (open ? closePanel() : openPanel())}
+          onPressIn={fab.onPressIn}
+          onPressOut={fab.onPressOut}
+          style={styles.fab}
+        >
+          <Text style={styles.fabLabel}>{t.menuLabel}</Text>
+        </Pressable>
+      </Animated.View>
 
       <Modal testID="menu-modal" visible={open} transparent animationType="none" onRequestClose={closePanel}>
         <Pressable style={styles.backdrop} onPress={closePanel} testID="menu-close-btn">
           <Pressable onPress={(e) => e.stopPropagation()}>
             <Animated.View style={[styles.panel, SHADOWS.elevated, panelStyle]}>
               {!!onTitle && (
-                <Pressable
-                  onPress={handleTitle}
-                  style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
-                >
-                  <Text style={styles.itemText}>{titleLabel}</Text>
-                </Pressable>
+                <Animated.View style={titleItem.style}>
+                  <Pressable
+                    onPress={handleTitle}
+                    onPressIn={titleItem.onPressIn}
+                    onPressOut={titleItem.onPressOut}
+                    style={styles.item}
+                  >
+                    <Text style={styles.itemText}>{titleLabel}</Text>
+                  </Pressable>
+                </Animated.View>
               )}
               {mode === 'local' && !!onNewGame && (
-                <Pressable
-                  onPress={handleNewGame}
-                  style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
-                >
-                  <Text style={styles.itemText}>{t.newGame}</Text>
-                </Pressable>
+                <Animated.View style={newGameItem.style}>
+                  <Pressable
+                    onPress={handleNewGame}
+                    onPressIn={newGameItem.onPressIn}
+                    onPressOut={newGameItem.onPressOut}
+                    style={styles.item}
+                  >
+                    <Text style={styles.itemText}>{t.newGame}</Text>
+                  </Pressable>
+                </Animated.View>
               )}
               <View style={styles.divider} />
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleLabel}>{t.bgmLabel}</Text>
-                <Pressable
-                  testID="menu-bgm-btn"
-                  accessibilityState={{ checked: !bgmMuted }}
-                  onPress={() => { setBgmMuted(!bgmMuted); onToggleBgm?.(); }}
-                  style={[styles.toggle, bgmMuted ? styles.toggleOff : styles.toggleOn]}
-                >
-                  <Text style={styles.toggleText}>{bgmMuted ? t.soundOff : t.soundOn}</Text>
-                </Pressable>
+                <Animated.View style={bgmBtn.style}>
+                  <Pressable
+                    testID="menu-bgm-btn"
+                    accessibilityState={{ checked: !bgmMuted }}
+                    onPress={() => { setBgmMuted(!bgmMuted); onToggleBgm?.(); }}
+                    onPressIn={bgmBtn.onPressIn}
+                    onPressOut={bgmBtn.onPressOut}
+                    style={[styles.toggle, bgmMuted ? styles.toggleOff : styles.toggleOn]}
+                  >
+                    <Text style={styles.toggleText}>{bgmMuted ? t.soundOff : t.soundOn}</Text>
+                  </Pressable>
+                </Animated.View>
               </View>
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleLabel}>{t.seLabel}</Text>
-                <Pressable
-                  testID="menu-se-btn"
-                  accessibilityState={{ checked: !seMuted }}
-                  onPress={() => { setSeMuted(!seMuted); onToggleSe?.(); }}
-                  style={[styles.toggle, seMuted ? styles.toggleOff : styles.toggleOn]}
-                >
-                  <Text style={styles.toggleText}>{seMuted ? t.soundOff : t.soundOn}</Text>
-                </Pressable>
+                <Animated.View style={seBtn.style}>
+                  <Pressable
+                    testID="menu-se-btn"
+                    accessibilityState={{ checked: !seMuted }}
+                    onPress={() => { setSeMuted(!seMuted); onToggleSe?.(); }}
+                    onPressIn={seBtn.onPressIn}
+                    onPressOut={seBtn.onPressOut}
+                    style={[styles.toggle, seMuted ? styles.toggleOff : styles.toggleOn]}
+                  >
+                    <Text style={styles.toggleText}>{seMuted ? t.soundOff : t.soundOn}</Text>
+                  </Pressable>
+                </Animated.View>
               </View>
             </Animated.View>
           </Pressable>
@@ -151,24 +187,19 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
 
 const styles = StyleSheet.create({
   fab: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderWidth: 2,
     borderColor: COLORS.boardFrame,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 200,
   },
-  fabIcon: {
-    fontSize: 22,
+  fabLabel: {
+    fontSize: FONT_SIZE.body,
     color: COLORS.boardFrame,
     fontFamily: FONT_FAMILY.bold,
-    marginTop: -2,
   },
   backdrop: {
     flex: 1,
