@@ -51,6 +51,8 @@ android/.cxx/
 android/app/.cxx/
 android/.kotlin/
 android/app/.kotlin/
+android/app/release/
+android/app/src/main/assets/
 
 # iOS (not used in this project)
 /ios
