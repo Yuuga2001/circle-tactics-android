@@ -45,7 +45,10 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
   // ── Roulette animation ──
   useEffect(() => {
     if (phase !== 'rouletting') return;
-    const order = turnOrderRef.current;
+    const order = turnOrder;
+    turnOrderRef.current = order;
+    const firstPlayer = order[0];
+    setRouletteHighlight(firstPlayer);
     const cycles = 3;
     const total = cycles * order.length + 1;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -57,9 +60,11 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
       const player = order[step % order.length];
       timeouts.push(setTimeout(() => setRouletteHighlight(player), cumulative));
     }
+    // Defensive: guarantee the final highlight matches the chosen first player.
+    timeouts.push(setTimeout(() => setRouletteHighlight(firstPlayer), cumulative + 1));
     timeouts.push(setTimeout(() => setPhase('announcing'), cumulative + 80));
     return () => timeouts.forEach(clearTimeout);
-  }, [phase]);
+  }, [phase, turnOrder]);
 
   // Announce → playing
   useEffect(() => {
@@ -191,13 +196,6 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     setTimeout(() => dispatch({ type: 'RETURN_TO_TITLE' }), 100);
   };
 
-  // Re-arm roulette on new game
-  useEffect(() => {
-    if (phase === 'rouletting') {
-      turnOrderRef.current = turnOrder;
-      setRouletteHighlight(turnOrder[0]);
-    }
-  }, [phase, turnOrder]);
 
   const playerLabel = (player: Player) =>
     humanPlayers.includes(player) ? `${t.playerLabel} ${player}` : `${player} (${t.aiLabel})`;
