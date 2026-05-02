@@ -166,8 +166,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
 
   useEffect(() => {
     if (phase !== 'rouletting') return;
-    const order = current.turnOrder;
-    turnOrderRef.current = order;
+    turnOrderRef.current = current.turnOrder;
+    const order = turnOrderRef.current;
     const firstPlayer = order[0];
     setRouletteHighlight(firstPlayer);
     const cycles = 3;
@@ -185,7 +185,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     timeouts.push(setTimeout(() => setRouletteHighlight(firstPlayer), cumulative + 1));
     timeouts.push(setTimeout(() => setPhase('announcing'), cumulative + 80));
     return () => timeouts.forEach(clearTimeout);
-  }, [phase, current.turnOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'announcing') return;
