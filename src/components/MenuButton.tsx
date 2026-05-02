@@ -116,7 +116,6 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
         <Pressable style={styles.backdrop} onPress={closePanel} testID="menu-close-btn">
           <Pressable onPress={(e) => e.stopPropagation()}>
             <Animated.View style={[styles.panel, SHADOWS.elevated, panelStyle]}>
-              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {!!onTitle && (
                 <Animated.View style={titleItem.style}>
                   <Pressable
@@ -251,7 +250,6 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                 <Text style={styles.versionLabel}>{t.versionLabel}</Text>
                 <Text style={styles.versionValue}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
               </View>
-              </ScrollView>
             </Animated.View>
           </Pressable>
         </Pressable>
@@ -351,7 +349,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     minWidth: 220,
-    maxHeight: 480,
     borderWidth: 2,
     borderColor: COLORS.boardFrame,
   },
