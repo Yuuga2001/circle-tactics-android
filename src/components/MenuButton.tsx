@@ -248,7 +248,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
               <View style={styles.divider} />
               <View style={styles.versionRow}>
                 <Text style={styles.versionLabel}>{t.versionLabel}</Text>
-                <Text style={styles.versionValue}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+                <Text style={styles.versionValue}>{Constants.expoConfig?.version ?? '1.0.1'}</Text>
               </View>
             </Animated.View>
           </Pressable>
