@@ -7,6 +7,7 @@ import { api } from '../online/api';
 import { clearActiveGame, useLiveRoomCode, useLivePlayerCount } from '../online/activeGame';
 import { getClientId } from '../online/clientId';
 import { COLORS, FONT_FAMILY, FONT_SIZE } from '../styles/theme';
+import { useNewGameHandler } from '../hooks/useNewGame';
 
 const AppChrome: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -21,6 +22,7 @@ const AppChrome: React.FC = () => {
   else if (top === 'online' && (second === 'playing' || second === 'spectating' || second === 'waiting')) mode = 'online';
 
   const isPlaying = mode === 'local' || mode === 'online';
+  const newGameHandler = useNewGameHandler();
   const roomCode = useLiveRoomCode();
   const playerCount = useLivePlayerCount();
 
@@ -49,7 +51,7 @@ const AppChrome: React.FC = () => {
         )}
       </View>
       <View style={[styles.right, { top: topOffset }]} pointerEvents="box-none">
-        <MenuButton mode={mode} onTitle={isPlaying ? goTitle : undefined} />
+        <MenuButton mode={mode} onTitle={isPlaying ? goTitle : undefined} onNewGame={newGameHandler ?? undefined} />
       </View>
     </View>
   );

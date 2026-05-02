@@ -27,9 +27,10 @@ type Phase = 'rouletting' | 'announcing' | 'playing';
 interface GameProps {
   state: GameState;
   dispatch: React.Dispatch<Action>;
+  restartRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
+const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => {
   const { t } = useLang();
   const { play } = useGameSounds();
   const { board, hands, currentPlayer, turnOrder, winner, winInfo, selectedSize, humanPlayers } = state;
@@ -190,6 +191,11 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch }) => {
     setSkippingPlayer(null);
     consecutiveSkipsRef.current = 0;
   };
+
+  useEffect(() => {
+    if (restartRef) restartRef.current = handleRestart;
+    return () => { if (restartRef) restartRef.current = null; };
+  });
 
   const handleReturnToTitle = () => {
     setIsExiting(true);
