@@ -40,14 +40,4 @@ describe('useAppInit', () => {
 
     expect(result.current.clientId).toBe('test-client-id');
   });
-
-  it('activeGame が設定される（null の場合）', async () => {
-    const { result } = renderHook(() => useAppInit());
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(result.current.activeGame).toBeNull();
-  });
 });

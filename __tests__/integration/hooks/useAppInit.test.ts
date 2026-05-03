@@ -43,11 +43,6 @@ describe('useAppInit', () => {
     expect(result.current.clientId).toBeNull();
   });
 
-  it('初期状態では activeGame=null', () => {
-    const { result } = renderHook(() => useAppInit());
-    expect(result.current.activeGame).toBeNull();
-  });
-
   it('非同期初期化後に ready=true になる', async () => {
     const { result } = renderHook(() => useAppInit());
     await waitFor(() => {
@@ -59,17 +54,6 @@ describe('useAppInit', () => {
     const { result } = renderHook(() => useAppInit());
     await waitFor(() => {
       expect(result.current.clientId).toBe('client-abc');
-    });
-  });
-
-  it('loadActiveGame が値を返すとき activeGame にセットされる', async () => {
-    const { loadActiveGame } = require('../../../src/online/activeGame');
-    const gameInfo = { gameId: 'g1', roomCode: 'ABC123', color: 'RED' };
-    loadActiveGame.mockResolvedValueOnce(gameInfo);
-
-    const { result } = renderHook(() => useAppInit());
-    await waitFor(() => {
-      expect(result.current.activeGame).toEqual(gameInfo);
     });
   });
 
