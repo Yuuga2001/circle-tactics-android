@@ -22,6 +22,8 @@ interface Options {
   onPlace: (row: number, col: number) => void;
   boardLayout?: BoardLayout | null;
   remeasureBoard?: () => void;
+  validCells?: { row: number; col: number }[] | null;
+  onReject?: () => void;
 }
 
 export interface BoardDragApi {
@@ -49,6 +51,11 @@ function findCellAt(
   const col = Math.min(3, Math.floor((rx + BOARD_GAP / 2) / step));
   const row = Math.min(3, Math.floor((ry + BOARD_GAP / 2) / step));
   return { row, col };
+}
+
+function isValidCell(cell: { row: number; col: number }, validCells?: { row: number; col: number }[] | null): boolean {
+  if (!validCells) return true;
+  return validCells.some((c) => c.row === cell.row && c.col === cell.col);
 }
 
 export function useBoardDrag(options: Options): BoardDragApi {
@@ -107,7 +114,11 @@ export function useBoardDrag(options: Options): BoardDragApi {
                 ? findCellAt(px, py, optsRef.current.boardLayout)
                 : null;
               if (hoverCell) {
-                optsRef.current.onPlace(hoverCell.row, hoverCell.col);
+                if (isValidCell(hoverCell, optsRef.current.validCells)) {
+                  optsRef.current.onPlace(hoverCell.row, hoverCell.col);
+                } else {
+                  optsRef.current.onReject?.();
+                }
               }
             }
             draggingRef.current = false;

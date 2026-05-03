@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { api } from '../online/api';
+import { api, friendlyError } from '../online/api';
 import { GameSession } from '../online/types';
 import { usePolling } from '../online/usePolling';
 import { useHeartbeat } from '../online/useHeartbeat';
@@ -17,6 +17,7 @@ interface WaitingRoomProps {
   session?: GameSession;
   onGameStart: (session: GameSession) => void;
   onLeave: () => void;
+  onError?: (msg: string) => void;
 }
 
 const WaitingRoom: React.FC<WaitingRoomProps> = ({
@@ -25,10 +26,12 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
   session: initialSession,
   onGameStart,
   onLeave,
+  onError,
 }) => {
   const { t } = useLang();
   const { session: polledSession } = usePolling(gameId, { intervalMs: 1500 });
   useHeartbeat(gameId, clientId, true);
+  const [starting, setStarting] = useState(false);
 
   const session = polledSession ?? initialSession;
 
@@ -38,11 +41,26 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
 
   const players = session?.players ?? [];
   const me = players.find((p) => p.clientId === clientId);
+  const isHost = session?.hostClientId === clientId;
 
   const handleLeave = () => {
     api.leave(gameId, clientId).catch(() => {});
     clearActiveGame();
     onLeave();
+  };
+
+  const handleStart = async () => {
+    if (starting) return;
+    setStarting(true);
+    try {
+      const humanCount = Math.max(1, players.length);
+      const updated = await api.start(gameId, clientId, humanCount);
+      onGameStart(updated);
+    } catch (e) {
+      onError?.(friendlyError(e));
+    } finally {
+      setStarting(false);
+    }
   };
 
   return (
@@ -72,6 +90,8 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                   color={p.color}
                   isSelf={p.clientId === clientId}
                   selfLabel={t.youLabel}
+                  isHost={p.clientId === session?.hostClientId}
+                  hostLabel={t.hostLabel}
                 />
               ))}
             </View>
@@ -81,6 +101,16 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         {!!me && <Text style={lobbyStyles.hint}>{t.youAre(me.color)}</Text>}
 
         <View style={lobbyStyles.actions}>
+          {isHost && (
+            <Button
+              title={starting ? t.starting : t.startGame}
+              variant="play"
+              fullWidth
+              disabled={starting}
+              onPress={handleStart}
+              testID="start-btn"
+            />
+          )}
           <Button title={t.leave} variant="ghost" fullWidth onPress={handleLeave} testID="leave-btn" />
         </View>
       </View>

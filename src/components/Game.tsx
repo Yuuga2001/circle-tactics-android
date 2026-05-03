@@ -13,6 +13,7 @@ import ScreenContainer from './ui/ScreenContainer';
 import AnnounceOverlay from './AnnounceOverlay';
 import Confetti from './Confetti';
 import { useBoardDrag, BoardLayout } from './useBoardDrag';
+import Toast from './Toast';
 import {
   COLORS,
   FONT_FAMILY,
@@ -147,6 +148,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
 
   const [isExiting, setIsExiting] = useState(false);
   const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
+  const [rejectToast, setRejectToast] = useState(false);
   const boardRemeasureRef = useRef<(() => void) | null>(null);
   const interactionAllowed = phase === 'playing' && isCurrentHuman && !winner;
 
@@ -183,6 +185,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
     onPlace: handleCellClick,
     boardLayout,
     remeasureBoard: () => boardRemeasureRef.current?.(),
+    validCells,
+    onReject: () => { play('reject'); setRejectToast(true); },
   });
 
   const handleRestart = () => {
@@ -331,6 +335,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
         )}
       </ScrollView>
       {drag.ghost}
+      <Toast message={rejectToast ? t.cannotPlaceHere : null} duration={1500} onDismiss={() => setRejectToast(false)} />
     </ScreenContainer>
   );
 };

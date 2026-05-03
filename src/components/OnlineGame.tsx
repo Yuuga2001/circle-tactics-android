@@ -197,6 +197,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   // Optimistic UI for select-size
   const [optimisticSelectedSize, setOptimisticSelectedSize] = useState<PieceSize | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [rejectToast, setRejectToast] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const confirm = (message: string, onConfirm: () => void) => {
@@ -250,6 +251,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     onPlace: handleCellClick,
     boardLayout,
     remeasureBoard: () => boardRemeasureRef.current?.(),
+    validCells,
+    onReject: () => { play('reject'); setRejectToast(true); },
   });
 
   const handleRestart = async () => {
@@ -486,6 +489,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
 
       {drag.ghost}
 
+      <Toast message={rejectToast ? t.cannotPlaceHere : null} duration={1500} onDismiss={() => setRejectToast(false)} />
       {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
 
       <NetworkErrorView visible={showNetworkError} />
