@@ -512,7 +512,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
       <Toast key={rejectToastKey} message={rejectToastKey > 0 ? t.cannotPlaceHere : null} duration={1500} onDismiss={dismissRejectToast} />
       {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
 
-      <NetworkErrorView visible={showNetworkError} />
+      <NetworkErrorView visible={showNetworkError} onBack={handleLeave} />
 
       <ConfirmDialog
         visible={!!confirmDialog}

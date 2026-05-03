@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,9 +13,10 @@ import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS } from '../styles/theme';
 
 interface NetworkErrorViewProps {
   visible: boolean;
+  onBack: () => void;
 }
 
-const NetworkErrorView: React.FC<NetworkErrorViewProps> = ({ visible }) => {
+const NetworkErrorView: React.FC<NetworkErrorViewProps> = ({ visible, onBack }) => {
   const { t } = useLang();
 
   // ドット3つがそれぞれずれて点滅するアニメーション
@@ -71,6 +72,9 @@ const NetworkErrorView: React.FC<NetworkErrorViewProps> = ({ visible }) => {
           <Animated.View style={[styles.dot, dot2Style]} />
           <Animated.View style={[styles.dot, dot3Style]} />
         </View>
+        <Pressable onPress={onBack} testID="network-error-back-btn" style={styles.backBtn}>
+          <Text style={styles.backBtnText}>{t.backToTitle}</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -122,6 +126,15 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: COLORS.boardFrame,
+  },
+  backBtn: {
+    marginTop: 8,
+  },
+  backBtnText: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.body,
+    color: COLORS.textMuted,
+    textDecorationLine: 'underline',
   },
 });
 
