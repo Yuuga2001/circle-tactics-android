@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Action, GameState, PieceSize, Player, SIZES } from '../types';
 import { findBestMove } from '../logic/ai';
@@ -148,7 +148,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
 
   const [isExiting, setIsExiting] = useState(false);
   const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
-  const [rejectToast, setRejectToast] = useState(false);
+  const [rejectToastKey, setRejectToastKey] = useState(0);
+  const dismissRejectToast = useCallback(() => setRejectToastKey(0), []);
   const boardRemeasureRef = useRef<(() => void) | null>(null);
   const interactionAllowed = phase === 'playing' && isCurrentHuman && !winner;
 
@@ -176,10 +177,23 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
     if (!interactionAllowed) return;
     if (validCells && !validCells.some((c) => c.row === row && c.col === col)) {
       play('reject');
-      setRejectToast(true);
+      setRejectToastKey(k => k + 1);
       return;
     }
     dispatch({ type: 'PLACE_PIECE', payload: { row, col } });
+  };
+
+  const boardRef = useRef(board);
+  boardRef.current = board;
+  const handsRef = useRef(hands);
+  handsRef.current = hands;
+  const currentPlayerRef = useRef(currentPlayer);
+  currentPlayerRef.current = currentPlayer;
+
+  const validateDrop = (row: number, col: number, size: PieceSize): boolean => {
+    const cell = boardRef.current[row]?.[col];
+    if (!cell) return false;
+    return cell[SIZES.indexOf(size)] === null && (handsRef.current[currentPlayerRef.current]?.[size] ?? 0) > 0;
   };
 
   const drag = useBoardDrag({
@@ -191,7 +205,8 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
     boardLayout,
     remeasureBoard: () => boardRemeasureRef.current?.(),
     validCells,
-    onReject: () => { play('reject'); setRejectToast(true); },
+    onReject: () => { play('reject'); setRejectToastKey(k => k + 1); },
+    validateDrop,
   });
 
   const handleRestart = () => {
@@ -340,7 +355,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
         )}
       </ScrollView>
       {drag.ghost}
-      <Toast message={rejectToast ? t.cannotPlaceHere : null} duration={1500} onDismiss={() => setRejectToast(false)} />
+      <Toast key={rejectToastKey} message={rejectToastKey > 0 ? t.cannotPlaceHere : null} duration={1500} onDismiss={dismissRejectToast} />
     </ScreenContainer>
   );
 };

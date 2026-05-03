@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -197,7 +197,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   // Optimistic UI for select-size
   const [optimisticSelectedSize, setOptimisticSelectedSize] = useState<PieceSize | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [rejectToast, setRejectToast] = useState(false);
+  const [rejectToastKey, setRejectToastKey] = useState(0);
+  const dismissRejectToast = useCallback(() => setRejectToastKey(0), []);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const confirm = (message: string, onConfirm: () => void) => {
@@ -232,7 +233,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     if (!size) return;
     if (validCells && !validCells.some((c) => c.row === row && c.col === col)) {
       play('reject');
-      setRejectToast(true);
+      setRejectToastKey(k => k + 1);
       return;
     }
     setErrorMsg(null);
@@ -248,6 +249,19 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
   const [boardLayout, setBoardLayout] = useState<BoardLayout | null>(null);
   const boardRemeasureRef = useRef<(() => void) | null>(null);
 
+  const boardRef = useRef(current.board);
+  boardRef.current = current.board;
+  const onlineHandsRef = useRef(current.hands);
+  onlineHandsRef.current = current.hands;
+  const onlineCurrentPlayerRef = useRef(current.currentPlayer);
+  onlineCurrentPlayerRef.current = current.currentPlayer;
+
+  const validateDrop = (row: number, col: number, size: PieceSize): boolean => {
+    const cell = boardRef.current[row]?.[col];
+    if (!cell) return false;
+    return cell[SIZES.indexOf(size)] === null && (onlineHandsRef.current[onlineCurrentPlayerRef.current]?.[size] ?? 0) > 0;
+  };
+
   const drag = useBoardDrag({
     player: current.currentPlayer,
     hand: current.hands[current.currentPlayer],
@@ -257,7 +271,8 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     boardLayout,
     remeasureBoard: () => boardRemeasureRef.current?.(),
     validCells,
-    onReject: () => { play('reject'); setRejectToast(true); },
+    onReject: () => { play('reject'); setRejectToastKey(k => k + 1); },
+    validateDrop,
   });
 
   const handleRestart = async () => {
@@ -494,7 +509,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
 
       {drag.ghost}
 
-      <Toast message={rejectToast ? t.cannotPlaceHere : null} duration={1500} onDismiss={() => setRejectToast(false)} />
+      <Toast key={rejectToastKey} message={rejectToastKey > 0 ? t.cannotPlaceHere : null} duration={1500} onDismiss={dismissRejectToast} />
       {!!errorMsg && <Toast message={errorMsg} onDismiss={() => setErrorMsg(null)} />}
 
       <NetworkErrorView visible={showNetworkError} />
