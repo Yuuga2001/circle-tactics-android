@@ -164,6 +164,21 @@ const HostScreen: React.FC<HostScreenProps> = ({ gameId: initialGameId, clientId
             ))}
           </View>
           {aiCount > 0 && <Text style={[lobbyStyles.hint, { marginTop: 8 }]}>{t.aiSeats(aiCount)}</Text>}
+          {(session?.waitQueue?.length ?? 0) > 0 && (
+            <>
+              <View style={hostStyles.spectatorDivider} />
+              <Text style={hostStyles.spectatorHeader}>
+                {t.spectatorsLabel(session!.waitQueue!.length)}
+              </Text>
+              <View style={hostStyles.chipRow}>
+                {session!.waitQueue!.map((cid, idx) => (
+                  <View key={cid} style={hostStyles.spectatorChip}>
+                    <Text style={hostStyles.spectatorChipText}>#{idx + 1}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
         </View>
 
         {!!errorMsg && <Text style={lobbyStyles.errorMessage}>{errorMsg}</Text>}
@@ -210,6 +225,30 @@ const hostStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+  },
+  spectatorDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginVertical: 8,
+  },
+  spectatorHeader: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 6,
+  },
+  spectatorChip: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.15)',
+  },
+  spectatorChipText: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.body,
+    color: '#999',
   },
 });
 

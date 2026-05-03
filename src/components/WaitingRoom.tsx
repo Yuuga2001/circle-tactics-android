@@ -96,6 +96,29 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
               ))}
             </View>
           )}
+          {(session?.waitQueue?.length ?? 0) > 0 && (
+            <>
+              <View style={waitingStyles.divider} />
+              <Text style={waitingStyles.spectatorHeader}>
+                {t.spectatorsLabel(session!.waitQueue!.length)}
+              </Text>
+              <View style={waitingStyles.chipRow}>
+                {session!.waitQueue!.map((cid, idx) => (
+                  <View
+                    key={cid}
+                    style={[
+                      waitingStyles.spectatorChip,
+                      cid === clientId ? waitingStyles.spectatorChipSelf : null,
+                    ]}
+                  >
+                    <Text style={waitingStyles.spectatorChipText}>
+                      #{idx + 1}{cid === clientId ? ` (${t.youLabel})` : ''}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
         </View>
 
         {!!me && <Text style={lobbyStyles.hint}>{t.youAre(me.color)}</Text>}
@@ -129,6 +152,33 @@ const waitingStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginVertical: 8,
+  },
+  spectatorHeader: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 6,
+  },
+  spectatorChip: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.15)',
+  },
+  spectatorChipSelf: {
+    borderColor: 'rgba(255,193,7,0.6)',
+  },
+  spectatorChipText: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.body,
+    color: '#999',
   },
 });
 

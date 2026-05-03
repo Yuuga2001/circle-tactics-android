@@ -24,6 +24,8 @@ interface Options {
   remeasureBoard?: () => void;
   validCells?: { row: number; col: number }[] | null;
   onReject?: () => void;
+  /** Preferred over validCells: computed from raw refs so never stale. */
+  validateDrop?: (row: number, col: number, size: PieceSize) => boolean;
 }
 
 export interface BoardDragApi {
@@ -114,7 +116,11 @@ export function useBoardDrag(options: Options): BoardDragApi {
                 ? findCellAt(px, py, optsRef.current.boardLayout)
                 : null;
               if (hoverCell) {
-                if (isValidCell(hoverCell, optsRef.current.validCells)) {
+                const vd = optsRef.current.validateDrop;
+                const isValid = vd
+                  ? vd(hoverCell.row, hoverCell.col, size)
+                  : isValidCell(hoverCell, optsRef.current.validCells);
+                if (isValid) {
                   optsRef.current.onPlace(hoverCell.row, hoverCell.col);
                 } else {
                   optsRef.current.onReject?.();
