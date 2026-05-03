@@ -174,6 +174,11 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
 
   const handleCellClick = (row: number, col: number) => {
     if (!interactionAllowed) return;
+    if (validCells && !validCells.some((c) => c.row === row && c.col === col)) {
+      play('reject');
+      setRejectToast(true);
+      return;
+    }
     dispatch({ type: 'PLACE_PIECE', payload: { row, col } });
   };
 

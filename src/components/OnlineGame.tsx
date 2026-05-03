@@ -230,6 +230,11 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     if (!isMyTurn || phase !== 'playing') return;
     const size = (optimisticSelectedSize ?? current.selectedSize) || undefined;
     if (!size) return;
+    if (validCells && !validCells.some((c) => c.row === row && c.col === col)) {
+      play('reject');
+      setRejectToast(true);
+      return;
+    }
     setErrorMsg(null);
     try {
       const updated = await api.placePiece(gameId, clientId, row, col, size);
