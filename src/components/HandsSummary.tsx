@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Player, HandState, SIZES, SIZE_LABEL } from '../types';
+import { useLang } from '../i18n';
 import {
   COLORS,
   PLAYER_COLORS,
@@ -26,6 +27,7 @@ const HandsSummary: React.FC<HandsSummaryProps> = ({
   currentPlayer,
   myColor,
 }) => {
+  const { t } = useLang();
   return (
     <View style={[styles.summary, SHADOWS.subtle]}>
       <View style={[styles.row, styles.headerRow]}>
@@ -60,7 +62,7 @@ const HandsSummary: React.FC<HandsSummaryProps> = ({
               <Text style={styles.playerName}>{player}</Text>
               {isMine && (
                 <View style={[styles.tag, styles.youTag]}>
-                  <Text style={[styles.tagText, styles.youTagText]}>You</Text>
+                  <Text style={[styles.tagText, styles.youTagText]}>{t.youLabel}</Text>
                 </View>
               )}
               {!isHuman && (
