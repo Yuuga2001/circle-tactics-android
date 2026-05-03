@@ -60,4 +60,18 @@ describe('HandsSummary', () => {
     expect(getByTestId('hands-count-RED-MEDIUM')).toBeTruthy();
     expect(getByTestId('hands-count-RED-LARGE')).toBeTruthy();
   });
+
+  it('myColor が指定されているとき t.youLabel テキスト(英語 "You")が表示される', () => {
+    const { getByText } = render(
+      <HandsSummary hands={hands} players={players} currentPlayer="RED" myColor="RED" />
+    );
+    expect(getByText('You')).toBeTruthy();
+  });
+
+  it('myColor が未設定のとき "You" ラベルは表示されない', () => {
+    const { queryByText } = render(
+      <HandsSummary hands={hands} players={players} currentPlayer="RED" />
+    );
+    expect(queryByText('You')).toBeNull();
+  });
 });

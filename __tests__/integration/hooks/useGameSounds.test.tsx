@@ -68,4 +68,16 @@ describe('useGameSounds', () => {
     rerender({});
     expect(result.current.stopBGM).toBe(ref1);
   });
+
+  it('play("reject") を呼ぶと audioManager.play が "reject" で呼ばれる', () => {
+    const { result } = renderHook(() => useGameSounds());
+    act(() => { result.current.play('reject'); });
+    expect(audioManager.play).toHaveBeenCalledWith('reject');
+  });
+
+  it('play("tap") を呼ぶと audioManager.play が "tap" で呼ばれる', () => {
+    const { result } = renderHook(() => useGameSounds());
+    act(() => { result.current.play('tap'); });
+    expect(audioManager.play).toHaveBeenCalledWith('tap');
+  });
 });

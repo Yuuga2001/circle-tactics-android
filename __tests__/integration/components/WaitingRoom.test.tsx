@@ -278,3 +278,90 @@ describe('WaitingRoom', () => {
     expect(elements.length).toBeGreaterThan(0);
   });
 });
+
+// ── waitQueue テスト ─────────────────────────────────────────────────────────
+// spectatorsLabel が必要なため useLang をスパイして上書きする
+
+describe('WaitingRoom / waitQueue', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const i18nModule = require('../../../src/i18n/index');
+
+  beforeEach(() => {
+    mockPolledSession = null;
+    jest.clearAllMocks();
+    jest.spyOn(i18nModule, 'useLang').mockReturnValue({
+      t: {
+        back: 'Back',
+        leave: 'Leave',
+        roomCode: 'Room Code',
+        startGame: 'Start Game',
+        copyRoomCode: 'Copy',
+        waitingTitle: 'Waiting',
+        waitingDesc: 'desc',
+        playersLabel: (n: number, m: number) => `${n}/${m}`,
+        youAre: (c: string) => c,
+        youLabel: 'you',
+        waitingToJoin: 'Waiting to join',
+        queuePos: (n: number) => `#${n}`,
+        youreNext: "You're next",
+        willJoinAuto: 'You will join automatically',
+        joinBtn: 'Join',
+        enterCode: 'Enter code',
+        joinRoom: 'Join Room',
+        scanQR: 'Scan QR',
+        joiningRoom: 'Joining...',
+        spectating: 'Spectating',
+        spectatorsLabel: (n: number) => `Spectators (${n})`,
+        hostLabel: 'host',
+        starting: 'Starting...',
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('waitQueue が空のとき観戦者セクションは表示されない', () => {
+    const session = makeSession({ waitQueue: [] });
+    const { queryByText } = render(
+      <WaitingRoom
+        gameId="g1"
+        clientId="client-1"
+        session={session}
+        onGameStart={jest.fn()}
+        onLeave={jest.fn()}
+      />,
+    );
+    expect(queryByText(/Spectators/)).toBeNull();
+  });
+
+  it('waitQueue に 1 人いるとき "#1" が表示される', () => {
+    const session = makeSession({ waitQueue: ['client-99'] });
+    const { getByText } = render(
+      <WaitingRoom
+        gameId="g1"
+        clientId="client-1"
+        session={session}
+        onGameStart={jest.fn()}
+        onLeave={jest.fn()}
+      />,
+    );
+    expect(getByText('#1')).toBeTruthy();
+  });
+
+  it('自分が waitQueue にいるとき youLabel が表示される', () => {
+    const session = makeSession({ waitQueue: ['client-1'] });
+    const { getByText } = render(
+      <WaitingRoom
+        gameId="g1"
+        clientId="client-1"
+        session={session}
+        onGameStart={jest.fn()}
+        onLeave={jest.fn()}
+      />,
+    );
+    // cid === clientId のとき `#1 (you)` のテキストになる
+    expect(getByText('#1 (you)')).toBeTruthy();
+  });
+});

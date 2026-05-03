@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import NetworkErrorView from '../../../src/components/NetworkErrorView';
 
 jest.useFakeTimers();
@@ -54,5 +54,12 @@ describe('NetworkErrorView', () => {
   it('アニメーションタイマーが例外なく実行される', () => {
     render(<NetworkErrorView visible={true} />);
     expect(() => act(() => { jest.runAllTimers(); })).not.toThrow();
+  });
+
+  it('onBack ボタンを押すと onBack コールバックが呼ばれる', () => {
+    const onBack = jest.fn();
+    const { getByTestId } = render(<NetworkErrorView visible={true} onBack={onBack} />);
+    fireEvent.press(getByTestId('network-error-back-btn'));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

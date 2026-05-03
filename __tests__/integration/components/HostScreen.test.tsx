@@ -337,3 +337,78 @@ describe('HostScreen', () => {
     expect(await findByText('Start failed')).toBeTruthy();
   });
 });
+
+// ── waitQueue テスト ─────────────────────────────────────────────────────────
+// spectatorsLabel が必要なため useLang をスパイして上書きする
+
+describe('HostScreen / waitQueue', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const i18nModule = require('../../../src/i18n/index');
+
+  beforeEach(() => {
+    mockPolledSession = null;
+    jest.clearAllMocks();
+    mockCreateGame.mockResolvedValue({
+      gameId: 'g1',
+      roomCode: 'ABC123',
+      you: { clientId: 'client-1', color: 'RED' },
+    });
+    mockStart.mockResolvedValue(makeSession({ status: 'PLAYING' }));
+    jest.spyOn(i18nModule, 'useLang').mockReturnValue({
+      t: {
+        back: 'Back',
+        cancel: 'Cancel',
+        leave: 'Leave',
+        roomCode: 'Room Code',
+        startGame: 'Start Game',
+        copyRoomCode: 'Copy',
+        waitingTitle: 'Waiting',
+        waitingDesc: 'desc',
+        playersLabel: (n: number, m: number) => `${n}/${m}`,
+        playersInRoom: (n: number, m: number) => `${n}/${m}`,
+        youAre: (c: string) => c,
+        waitingToJoin: 'Waiting to join',
+        hostingRoom: 'Hosting',
+        shareCode: 'Share code',
+        hostLabel: 'host',
+        copied: 'Copied',
+        starting: 'Starting...',
+        aiSeats: (n: number) => `AI: ${n}`,
+        spectatorsLabel: (n: number) => `Spectators (${n})`,
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('waitQueue が空のとき観戦者セクションは表示されない', async () => {
+    mockPolledSession = makeSession({ status: 'WAITING', waitQueue: [] });
+    const { queryByText } = render(
+      <HostScreen
+        gameId="existing-game"
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onBack={jest.fn()}
+      />,
+    );
+    await act(async () => {});
+    expect(queryByText(/Spectators/)).toBeNull();
+  });
+
+  it('waitQueue に 1 人いるとき "#1" が表示される', async () => {
+    mockPolledSession = makeSession({ status: 'WAITING', waitQueue: ['client-99'] });
+    const { getByText } = render(
+      <HostScreen
+        gameId="existing-game"
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onBack={jest.fn()}
+      />,
+    );
+    await waitFor(() => {
+      expect(getByText('#1')).toBeTruthy();
+    });
+  });
+});
