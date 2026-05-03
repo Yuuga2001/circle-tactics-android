@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.boardFrame,
   },
   headerCell: {
-    flex: 1,
+    width: 50,
     fontFamily: FONT_FAMILY.bold,
     fontSize: 11,
     color: COLORS.boardFrame,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   headerPlayerCell: {
-    flex: 1.4,
+    flex: 1,
     textAlign: 'left',
     paddingLeft: 22,
   },
@@ -131,13 +131,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   playerCell: {
-    flex: 1.4,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   countCell: {
-    flex: 1,
+    width: 50,
     fontFamily: FONT_FAMILY.bold,
     fontSize: FONT_SIZE.lg,
     color: '#333',
