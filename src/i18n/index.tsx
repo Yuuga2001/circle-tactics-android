@@ -139,6 +139,7 @@ export interface T {
   clearLocalData: string;
   confirmClearData: string;
   versionLabel: string;
+  cannotPlaceHere: string;
 }
 
 const t: Record<LangCode, T> = {
@@ -236,6 +237,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Clear Local Data',
     confirmClearData: 'Delete all local data? This cannot be undone.',
     versionLabel: 'Version',
+    cannotPlaceHere: 'Cannot place here',
   },
 
   ja: {
@@ -332,6 +334,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'ローカルデータを削除',
     confirmClearData: 'ローカルデータをすべて削除しますか？この操作は元に戻せません。',
     versionLabel: 'バージョン',
+    cannotPlaceHere: 'ここには置けません',
   },
 
   zh: {
@@ -428,6 +431,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: '清除本地数据',
     confirmClearData: '删除所有本地数据？此操作无法撤销。',
     versionLabel: '版本',
+    cannotPlaceHere: '无法放置在这里',
   },
 
   'zh-TW': {
@@ -524,6 +528,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: '清除本機資料',
     confirmClearData: '刪除所有本機資料？此操作無法復原。',
     versionLabel: '版本',
+    cannotPlaceHere: '無法放置在這裡',
   },
 
   ko: {
@@ -620,6 +625,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: '로컬 데이터 삭제',
     confirmClearData: '모든 로컬 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
     versionLabel: '버전',
+    cannotPlaceHere: '여기에 놓을 수 없습니다',
   },
 
   es: {
@@ -716,6 +722,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Borrar datos locales',
     confirmClearData: '¿Eliminar todos los datos locales? Esta acción no se puede deshacer.',
     versionLabel: 'Versión',
+    cannotPlaceHere: 'No se puede colocar aquí',
   },
 
   fr: {
@@ -812,6 +819,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Effacer les données locales',
     confirmClearData: 'Supprimer toutes les données locales ? Cette action est irréversible.',
     versionLabel: 'Version',
+    cannotPlaceHere: 'Impossible de placer ici',
   },
 
   de: {
@@ -908,6 +916,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Lokale Daten löschen',
     confirmClearData: 'Alle lokalen Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
     versionLabel: 'Version',
+    cannotPlaceHere: 'Kann hier nicht platziert werden',
   },
 
   it: {
@@ -1004,6 +1013,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Cancella dati locali',
     confirmClearData: 'Eliminare tutti i dati locali? Questa azione è irreversibile.',
     versionLabel: 'Versione',
+    cannotPlaceHere: 'Non puoi posizionare qui',
   },
 
   pt: {
@@ -1100,6 +1110,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Limpar dados locais',
     confirmClearData: 'Excluir todos os dados locais? Esta ação não pode ser desfeita.',
     versionLabel: 'Versão',
+    cannotPlaceHere: 'Não pode colocar aqui',
   },
 
   ru: {
@@ -1196,6 +1207,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Удалить локальные данные',
     confirmClearData: 'Удалить все локальные данные? Это действие нельзя отменить.',
     versionLabel: 'Версия',
+    cannotPlaceHere: 'Нельзя разместить здесь',
   },
 
   ar: {
@@ -1292,6 +1304,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'حذف البيانات المحلية',
     confirmClearData: 'هل تريد حذف جميع البيانات المحلية؟ لا يمكن التراجع عن هذا الإجراء.',
     versionLabel: 'الإصدار',
+    cannotPlaceHere: 'لا يمكن الوضع هنا',
   },
 
   hi: {
@@ -1388,6 +1401,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'स्थानीय डेटा हटाएं',
     confirmClearData: 'सभी स्थानीय डेटा हटाएं? यह क्रिया पूर्ववत नहीं की जा सकती।',
     versionLabel: 'संस्करण',
+    cannotPlaceHere: 'यहाँ नहीं रखा जा सकता',
   },
 
   tr: {
@@ -1484,6 +1498,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Yerel Verileri Sil',
     confirmClearData: 'Tüm yerel veriler silinsin mi? Bu işlem geri alınamaz.',
     versionLabel: 'Sürüm',
+    cannotPlaceHere: 'Buraya yerleştirilemez',
   },
 
   id: {
@@ -1580,6 +1595,7 @@ const t: Record<LangCode, T> = {
     clearLocalData: 'Hapus Data Lokal',
     confirmClearData: 'Hapus semua data lokal? Tindakan ini tidak dapat dibatalkan.',
     versionLabel: 'Versi',
+    cannotPlaceHere: 'Tidak bisa ditempatkan di sini',
   },
 };
 

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { audioManager } from '../audio/audioManager';
 
-type SoundName = 'place' | 'select' | 'win' | 'draw' | 'skip' | 'first' | 'roulette';
+type SoundName = 'place' | 'select' | 'win' | 'draw' | 'skip' | 'first' | 'roulette' | 'tap' | 'reject';
 
 export function useGameSounds() {
   const play = useCallback((name: SoundName) => {
