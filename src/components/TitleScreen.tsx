@@ -23,6 +23,7 @@ import {
 import ScreenContainer from './ui/ScreenContainer';
 import Button from './ui/Button';
 import DemoBoard from './DemoBoard';
+import SoloRecordList from './SoloRecordList';
 
 const AnimSeatCard: React.FC<{
   disabled: boolean;
@@ -66,6 +67,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
   const { startBGM } = useGameSounds();
   const [mode, setMode] = useState<'menu' | 'local'>('menu');
   const [humanFlags, setHumanFlags] = useState<Record<Player, boolean>>(DEFAULT_HUMAN_FLAGS);
+  const [showSoloRecords, setShowSoloRecords] = useState(false);
 
   useEffect(() => {
     startBGM();
@@ -75,6 +77,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
   const humanCount = humans.length;
   const aiCount = PLAYERS.length - humanCount;
   const canStart = humanCount >= 1;
+  const isSoloMode = humanCount === 1;
 
   const toggleRole = (player: Player) => {
     const isLastHuman = humanFlags[player] && humanCount === 1;
@@ -201,6 +204,20 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
           onPress={() => setMode('menu')}
           testID="back-btn"
         />
+
+        {isSoloMode && (
+          <View style={styles.soloSection}>
+            <Text style={styles.soloDesc}>{t.soloPlayDesc}</Text>
+            <Pressable
+              onPress={() => setShowSoloRecords(true)}
+              style={({ pressed }) => [styles.soloBtn, pressed && styles.soloBtnPressed]}
+            >
+              <Text style={styles.soloBtnText}>{t.soloPlayMode}</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <SoloRecordList visible={showSoloRecords} onClose={() => setShowSoloRecords(false)} />
       </View>
     </ScreenContainer>
   );
@@ -351,6 +368,34 @@ const styles = StyleSheet.create({
     color: '#000',
     opacity: 0.4,
     fontSize: FONT_SIZE.body,
+  },
+  soloSection: {
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    paddingVertical: 16,
+    width: '100%',
+  },
+  soloDesc: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.hint,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  soloBtn: {
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(141,110,99,0.15)',
+    borderRadius: 12,
+  },
+  soloBtnPressed: {
+    opacity: 0.7,
+  },
+  soloBtnText: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.text,
   },
 });
 

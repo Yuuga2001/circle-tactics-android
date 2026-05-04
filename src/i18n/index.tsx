@@ -141,6 +141,13 @@ export interface T {
   confirmClearData: string;
   versionLabel: string;
   cannotPlaceHere: string;
+  soloPlayMode: string;
+  soloPlayDesc: string;
+  soloWin: string;
+  soloLose: string;
+  winRate: string;
+  battleRecord: string;
+  noRecords: string;
 }
 
 const t: Record<LangCode, T> = {
@@ -240,6 +247,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Delete all local data? This cannot be undone.',
     versionLabel: 'Version',
     cannotPlaceHere: 'Cannot place here',
+    soloPlayMode: 'Solo Play Records',
+    soloPlayDesc: 'Solo Play mode is selected.\nYour results will be recorded.',
+    soloWin: 'Win',
+    soloLose: 'Lose',
+    winRate: 'Win Rate',
+    battleRecord: 'Battle Records',
+    noRecords: 'No records yet.',
   },
 
   ja: {
@@ -338,6 +352,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'ローカルデータをすべて削除しますか？この操作は元に戻せません。',
     versionLabel: 'バージョン',
     cannotPlaceHere: 'ここには置けません',
+    soloPlayMode: 'ソロプレイ記録',
+    soloPlayDesc: '選択中のゲームモードはソロプレイです。\nソロプレイでは戦績を記録します。',
+    soloWin: '勝ち',
+    soloLose: '負け',
+    winRate: '勝率',
+    battleRecord: '対戦記録',
+    noRecords: '記録なし',
   },
 
   zh: {
@@ -436,6 +457,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: '删除所有本地数据？此操作无法撤销。',
     versionLabel: '版本',
     cannotPlaceHere: '无法放置在这里',
+    soloPlayMode: '单人记录',
+    soloPlayDesc: '当前模式为单人游戏。\n游戏结果将被记录。',
+    soloWin: '胜',
+    soloLose: '败',
+    winRate: '胜率',
+    battleRecord: '对战记录',
+    noRecords: '暂无记录',
   },
 
   'zh-TW': {
@@ -534,6 +562,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: '刪除所有本機資料？此操作無法復原。',
     versionLabel: '版本',
     cannotPlaceHere: '無法放置在這裡',
+    soloPlayMode: '單人記錄',
+    soloPlayDesc: '目前為單人模式。\n對戰結果將被記錄。',
+    soloWin: '勝',
+    soloLose: '敗',
+    winRate: '勝率',
+    battleRecord: '對戰記錄',
+    noRecords: '暫無記錄',
   },
 
   ko: {
@@ -632,6 +667,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: '모든 로컬 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
     versionLabel: '버전',
     cannotPlaceHere: '여기에 놓을 수 없습니다',
+    soloPlayMode: '솔로 기록',
+    soloPlayDesc: '솔로 플레이 모드입니다.\n전적이 기록됩니다.',
+    soloWin: '승',
+    soloLose: '패',
+    winRate: '승률',
+    battleRecord: '전적',
+    noRecords: '기록 없음',
   },
 
   es: {
@@ -730,6 +772,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: '¿Eliminar todos los datos locales? Esta acción no se puede deshacer.',
     versionLabel: 'Versión',
     cannotPlaceHere: 'No se puede colocar aquí',
+    soloPlayMode: 'Registro solo',
+    soloPlayDesc: 'Modo solo seleccionado.\nSe registrarán tus resultados.',
+    soloWin: 'Victoria',
+    soloLose: 'Derrota',
+    winRate: 'Porcentaje de victorias',
+    battleRecord: 'Historial',
+    noRecords: 'Sin registros.',
   },
 
   fr: {
@@ -828,6 +877,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Supprimer toutes les données locales ? Cette action est irréversible.',
     versionLabel: 'Version',
     cannotPlaceHere: 'Impossible de placer ici',
+    soloPlayMode: 'Records solo',
+    soloPlayDesc: 'Mode solo sélectionné.\nVos résultats seront enregistrés.',
+    soloWin: 'Victoire',
+    soloLose: 'Défaite',
+    winRate: 'Taux de victoire',
+    battleRecord: 'Historique',
+    noRecords: 'Aucun enregistrement.',
   },
 
   de: {
@@ -926,6 +982,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Alle lokalen Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
     versionLabel: 'Version',
     cannotPlaceHere: 'Kann hier nicht platziert werden',
+    soloPlayMode: 'Solo-Aufzeichnungen',
+    soloPlayDesc: 'Einzelspielermodus ausgewählt.\nErgebnisse werden gespeichert.',
+    soloWin: 'Sieg',
+    soloLose: 'Niederlage',
+    winRate: 'Siegesrate',
+    battleRecord: 'Spielverlauf',
+    noRecords: 'Keine Einträge.',
   },
 
   it: {
@@ -1024,6 +1087,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Eliminare tutti i dati locali? Questa azione è irreversibile.',
     versionLabel: 'Versione',
     cannotPlaceHere: 'Non puoi posizionare qui',
+    soloPlayMode: 'Registro solo',
+    soloPlayDesc: 'Modalità solo selezionata.\nI risultati verranno registrati.',
+    soloWin: 'Vittoria',
+    soloLose: 'Sconfitta',
+    winRate: 'Percentuale vittorie',
+    battleRecord: 'Storico partite',
+    noRecords: 'Nessun record.',
   },
 
   pt: {
@@ -1122,6 +1192,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Excluir todos os dados locais? Esta ação não pode ser desfeita.',
     versionLabel: 'Versão',
     cannotPlaceHere: 'Não pode colocar aqui',
+    soloPlayMode: 'Registros solo',
+    soloPlayDesc: 'Modo solo selecionado.\nSeus resultados serão registrados.',
+    soloWin: 'Vitória',
+    soloLose: 'Derrota',
+    winRate: 'Taxa de vitória',
+    battleRecord: 'Histórico',
+    noRecords: 'Sem registros.',
   },
 
   ru: {
@@ -1220,6 +1297,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Удалить все локальные данные? Это действие нельзя отменить.',
     versionLabel: 'Версия',
     cannotPlaceHere: 'Нельзя разместить здесь',
+    soloPlayMode: 'Записи соло',
+    soloPlayDesc: 'Выбран одиночный режим.\nРезультаты будут записаны.',
+    soloWin: 'Победа',
+    soloLose: 'Поражение',
+    winRate: 'Процент побед',
+    battleRecord: 'История игр',
+    noRecords: 'Нет записей.',
   },
 
   ar: {
@@ -1318,6 +1402,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'هل تريد حذف جميع البيانات المحلية؟ لا يمكن التراجع عن هذا الإجراء.',
     versionLabel: 'الإصدار',
     cannotPlaceHere: 'لا يمكن الوضع هنا',
+    soloPlayMode: 'سجلات فردية',
+    soloPlayDesc: 'وضع اللاعب الفردي.\nسيتم تسجيل النتائج.',
+    soloWin: 'فوز',
+    soloLose: 'خسارة',
+    winRate: 'نسبة الفوز',
+    battleRecord: 'سجل المعارك',
+    noRecords: 'لا توجد سجلات.',
   },
 
   hi: {
@@ -1416,6 +1507,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'सभी स्थानीय डेटा हटाएं? यह क्रिया पूर्ववत नहीं की जा सकती।',
     versionLabel: 'संस्करण',
     cannotPlaceHere: 'यहाँ नहीं रखा जा सकता',
+    soloPlayMode: 'सोलो रिकॉर्ड',
+    soloPlayDesc: 'सोलो मोड चुना गया।\nपरिणाम दर्ज किए जाएंगे।',
+    soloWin: 'जीत',
+    soloLose: 'हार',
+    winRate: 'जीत की दर',
+    battleRecord: 'युद्ध रिकॉर्ड',
+    noRecords: 'कोई रिकॉर्ड नहीं।',
   },
 
   tr: {
@@ -1514,6 +1612,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Tüm yerel veriler silinsin mi? Bu işlem geri alınamaz.',
     versionLabel: 'Sürüm',
     cannotPlaceHere: 'Buraya yerleştirilemez',
+    soloPlayMode: 'Solo kayıtları',
+    soloPlayDesc: 'Tek oyuncu modu seçildi.\nSonuçlar kaydedilecek.',
+    soloWin: 'Kazandı',
+    soloLose: 'Kaybetti',
+    winRate: 'Kazanma oranı',
+    battleRecord: 'Maç geçmişi',
+    noRecords: 'Kayıt yok.',
   },
 
   id: {
@@ -1612,6 +1717,13 @@ const t: Record<LangCode, T> = {
     confirmClearData: 'Hapus semua data lokal? Tindakan ini tidak dapat dibatalkan.',
     versionLabel: 'Versi',
     cannotPlaceHere: 'Tidak bisa ditempatkan di sini',
+    soloPlayMode: 'Solo records',
+    soloPlayDesc: 'Mode solo dipilih.\nHasil akan dicatat.',
+    soloWin: 'Menang',
+    soloLose: 'Kalah',
+    winRate: 'Kadar menang',
+    battleRecord: 'Rekaman pertandingan',
+    noRecords: 'Belum ada rekaman.',
   },
 };
 

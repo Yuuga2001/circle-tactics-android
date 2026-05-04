@@ -14,6 +14,7 @@ import AnnounceOverlay from './AnnounceOverlay';
 import Confetti from './Confetti';
 import { useBoardDrag, BoardLayout } from './useBoardDrag';
 import Toast from './Toast';
+import { appendSoloRecord } from '../hooks/useSoloRecords';
 import {
   COLORS,
   FONT_FAMILY,
@@ -133,9 +134,14 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
   useEffect(() => {
     if (winner && winner !== prevWinnerRef.current) {
       play(winner === 'DRAW' ? 'draw' : 'win');
+      // ソロプレイ（人間1:AI3）の場合のみ戦績を保存
+      if (humanPlayers.length === 1 && winner !== 'DRAW') {
+        const isWin = winner === humanPlayers[0];
+        appendSoloRecord(isWin);
+      }
     }
     prevWinnerRef.current = winner;
-  }, [winner, play]);
+  }, [winner, play, humanPlayers]);
 
   const pieceCount = useMemo(
     () => board.flat().flat().filter((p) => p !== null).length,
