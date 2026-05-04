@@ -22,6 +22,7 @@
         "backgroundColor": "#f3e9d8"
       },
       "package": "jp.riverapp.circletactics",
+      "versionCode": 2,
       "edgeToEdgeEnabled": true,
       "intentFilters": [
         {
