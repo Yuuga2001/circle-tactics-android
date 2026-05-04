@@ -119,11 +119,9 @@ interface PlayerChipProps {
   color: Player;
   isSelf?: boolean;
   selfLabel?: string;
-  isHost?: boolean;
-  hostLabel?: string;
 }
 
-export const PlayerChip: React.FC<PlayerChipProps> = ({ color, isSelf, selfLabel, isHost, hostLabel }) => {
+export const PlayerChip: React.FC<PlayerChipProps> = ({ color, isSelf, selfLabel }) => {
   return (
     <View
       style={[
@@ -138,8 +136,7 @@ export const PlayerChip: React.FC<PlayerChipProps> = ({ color, isSelf, selfLabel
         ]}
       />
       <Text style={chipStyles.label}>{color}</Text>
-      {isSelf && !isHost && selfLabel && <Text style={chipStyles.selfLabel}>({selfLabel})</Text>}
-      {isHost && hostLabel && <Text style={chipStyles.selfLabel}>({hostLabel})</Text>}
+      {isSelf && selfLabel && <Text style={chipStyles.selfLabel}>({selfLabel})</Text>}
     </View>
   );
 };

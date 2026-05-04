@@ -1,27 +1,18 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import WaitingRoom from '../../src/components/WaitingRoom';
-import { saveActiveGame } from '../../src/online/activeGame';
-import { clearActiveGame } from '../../src/online/activeGame';
+import { saveActiveGame, clearActiveGame } from '../../src/online/activeGame';
 import type { GameSession } from '../../src/online/types';
 
 export default function WaitingRoute() {
   const router = useRouter();
-  const { gameId, clientId, session: sessionParam } = useLocalSearchParams<{
+  const { gameId, clientId, roomCode } = useLocalSearchParams<{
     gameId: string;
     clientId: string;
-    session: string;
+    roomCode?: string;
   }>();
 
-  const session = useMemo<GameSession | null>(() => {
-    try {
-      return JSON.parse(sessionParam ?? 'null') as GameSession;
-    } catch {
-      return null;
-    }
-  }, [sessionParam]);
-
-  if (!session || !gameId || !clientId) {
+  if (!gameId || !clientId) {
     router.replace('/');
     return null;
   }
@@ -30,7 +21,7 @@ export default function WaitingRoute() {
     const player = startedSession.players.find((p) => p.clientId === clientId);
     await saveActiveGame({
       gameId,
-      roomCode: startedSession.roomCode ?? '',
+      roomCode: startedSession.roomCode ?? roomCode ?? '',
       color: player?.color,
     });
     router.replace({
@@ -52,7 +43,7 @@ export default function WaitingRoute() {
     <WaitingRoom
       gameId={gameId}
       clientId={clientId}
-      session={session}
+      roomCode={roomCode}
       onGameStart={handleGameStart}
       onLeave={handleLeave}
     />
