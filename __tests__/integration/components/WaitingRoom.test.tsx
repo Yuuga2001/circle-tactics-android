@@ -236,6 +236,36 @@ describe('WaitingRoom', () => {
     });
   });
 
+  it('自分がプレイヤーのときスタートボタンが表示される', () => {
+    mockPolledSession = makeSession({
+      players: [makePlayer('client-1', 'RED'), makePlayer('client-2', 'BLUE')],
+    });
+    const { getByTestId } = render(
+      <WaitingRoom
+        gameId="g1"
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onLeave={jest.fn()}
+      />,
+    );
+    expect(getByTestId('start-btn')).toBeTruthy();
+  });
+
+  it('自分がプレイヤーリストにいないときスタートボタンは非表示', () => {
+    mockPolledSession = makeSession({
+      players: [makePlayer('client-2', 'BLUE')],
+    });
+    const { queryByTestId } = render(
+      <WaitingRoom
+        gameId="g1"
+        clientId="client-1"
+        onGameStart={jest.fn()}
+        onLeave={jest.fn()}
+      />,
+    );
+    expect(queryByTestId('start-btn')).toBeNull();
+  });
+
   it('プレイヤーが0人のときプレイヤーカウントが 0/4 と表示される', () => {
     mockPolledSession = makeSession({ players: [] });
     const { getByText } = render(

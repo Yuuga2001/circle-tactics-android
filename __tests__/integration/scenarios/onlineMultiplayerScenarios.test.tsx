@@ -417,20 +417,19 @@ describe('WaitingRoom シナリオ', () => {
     });
   });
 
-  it('WaitingRoom: ホストのとき Start ボタン表示', () => {
+  it('WaitingRoom: プレイヤーのとき Start ボタン表示', () => {
     const { usePolling } = require('../../../src/online/usePolling');
     const WaitingRoom = require('../../../src/components/WaitingRoom').default;
 
     const session = makeWaitingSession({
-      hostClientId: 'client-1',
-      players: [makePlayer('client-1', 'RED')],
+      players: [makePlayer('client-1', 'RED'), makePlayer('client-2', 'BLUE')],
     });
     usePolling.mockReturnValue({ session, error: null, setSession: jest.fn() });
 
     const { getByTestId } = render(
       <WaitingRoom
         gameId="g1"
-        clientId="client-1"
+        clientId="client-2"
         session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
@@ -440,23 +439,19 @@ describe('WaitingRoom シナリオ', () => {
     expect(getByTestId('start-btn')).toBeTruthy();
   });
 
-  it('WaitingRoom: 非ホストのとき Start ボタンは非表示', () => {
+  it('WaitingRoom: プレイヤーリストにいないとき Start ボタンは非表示', () => {
     const { usePolling } = require('../../../src/online/usePolling');
     const WaitingRoom = require('../../../src/components/WaitingRoom').default;
 
     const session = makeWaitingSession({
-      hostClientId: 'client-host',
-      players: [
-        makePlayer('client-host', 'RED'),
-        makePlayer('client-2', 'BLUE'),
-      ],
+      players: [makePlayer('client-1', 'RED')],
     });
     usePolling.mockReturnValue({ session, error: null, setSession: jest.fn() });
 
     const { queryByTestId } = render(
       <WaitingRoom
         gameId="g1"
-        clientId="client-2"
+        clientId="client-99"
         session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}

@@ -48,7 +48,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
   const shareUrl = displayCode ? `${SHARE_BASE}?room=${displayCode}` : '';
 
   const players = session?.players ?? [];
-  const isHost = session?.hostClientId === clientId;
+  const isPlayer = players.some((p) => p.clientId === clientId);
 
   const handleLeave = () => {
     api.leave(gameId, clientId).catch(() => {});
@@ -186,8 +186,8 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         </View>
 
         <View style={lobbyStyles.actions}>
-          {/* ホストのみスタートボタンを表示 */}
-          {isHost && (
+          {/* プレイヤーであれば誰でもスタートできる */}
+          {isPlayer && (
             <Button
               title={starting ? t.starting : t.startGame}
               variant="play"
