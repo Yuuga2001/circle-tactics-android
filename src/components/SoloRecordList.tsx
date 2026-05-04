@@ -6,8 +6,8 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../i18n';
 import { useSoloRecords, formatRecordDate } from '../hooks/useSoloRecords';
 import { COLORS, FONT_FAMILY, FONT_SIZE, PLAYER_BORDER_COLORS } from '../styles/theme';
