@@ -28,6 +28,9 @@ jest.mock('../../../src/online/activeGame', () => ({
   clearActiveGame: jest.fn(),
 }));
 
+jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
+jest.mock('react-native-qrcode-svg', () => ({ __esModule: true, default: () => null }));
+
 jest.mock('../../../src/i18n/index', () => ({
   useLang: () => ({
     t: {
@@ -36,11 +39,18 @@ jest.mock('../../../src/i18n/index', () => ({
       roomCode: 'Room Code',
       startGame: 'Start Game',
       copyRoomCode: 'Copy',
+      copyUrl: 'Copy URL',
+      copied: 'Copied',
       waitingTitle: 'Waiting',
       waitingDesc: 'desc',
       playersLabel: (n: number, m: number) => `${n}/${m}`,
+      playersInRoom: (n: number, m: number) => `${n}/${m}`,
+      aiSeats: (n: number) => `AI: ${n}`,
+      spectatorsLabel: (n: number) => `Spectators (${n})`,
       youAre: (c: string) => c,
       youLabel: 'you',
+      hostLabel: 'host',
+      starting: 'Starting...',
       waitingToJoin: 'Waiting to join',
       queuePos: (n: number) => `#${n}`,
       youreNext: "You're next",
@@ -121,12 +131,11 @@ describe('WaitingRoom', () => {
   });
 
   it('ルームコードが表示される', () => {
-    const session = makeSession({ roomCode: 'ABC123' });
+    mockPolledSession = makeSession({ roomCode: 'ABC123' });
     const { getByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -135,7 +144,7 @@ describe('WaitingRoom', () => {
   });
 
   it('セッションのプレイヤーリストが表示される', () => {
-    const session = makeSession({
+    mockPolledSession = makeSession({
       players: [
         makePlayer('client-1', 'RED'),
         makePlayer('client-2', 'BLUE'),
@@ -145,7 +154,6 @@ describe('WaitingRoom', () => {
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -157,12 +165,10 @@ describe('WaitingRoom', () => {
 
   it('leave ボタンを押すと onLeave が呼ばれる', () => {
     const onLeave = jest.fn();
-    const session = makeSession();
     const { getByTestId } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={onLeave}
       />,
@@ -173,12 +179,10 @@ describe('WaitingRoom', () => {
 
   it('leave ボタンを押すと api.leave が呼ばれる', () => {
     const { api } = require('../../../src/online/api');
-    const session = makeSession();
     const { getByTestId } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -189,12 +193,10 @@ describe('WaitingRoom', () => {
 
   it('leave ボタンを押すと clearActiveGame が呼ばれる', () => {
     const { clearActiveGame } = require('../../../src/online/activeGame');
-    const session = makeSession();
     const { getByTestId } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -205,14 +207,12 @@ describe('WaitingRoom', () => {
 
   it('ポーリングで status が PLAYING になると onGameStart が呼ばれる', async () => {
     const onGameStart = jest.fn();
-    const initialSession = makeSession();
     const playingSession = makeSession({ status: 'PLAYING' });
 
     const { rerender } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={initialSession}
         onGameStart={onGameStart}
         onLeave={jest.fn()}
       />,
@@ -225,7 +225,6 @@ describe('WaitingRoom', () => {
         <WaitingRoom
           gameId="g1"
           clientId="client-1"
-          session={initialSession}
           onGameStart={onGameStart}
           onLeave={jest.fn()}
         />,
@@ -238,12 +237,11 @@ describe('WaitingRoom', () => {
   });
 
   it('プレイヤーが0人のときプレイヤーカウントが 0/4 と表示される', () => {
-    const session = makeSession({ players: [] });
+    mockPolledSession = makeSession({ players: [] });
     const { getByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -252,30 +250,19 @@ describe('WaitingRoom', () => {
   });
 
   it('自分のプレイヤーが含まれているとき youAre テキストが表示される', () => {
-    const session = makeSession({
+    mockPolledSession = makeSession({
       players: [makePlayer('client-1', 'RED')],
     });
-    const { getByText } = render(
+    const { getAllByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
     );
-    // t.youAre('RED') = 'RED'
-    // findAll to handle multiple occurrences
-    const elements = render(
-      <WaitingRoom
-        gameId="g1"
-        clientId="client-1"
-        session={session}
-        onGameStart={jest.fn()}
-        onLeave={jest.fn()}
-      />,
-    ).getAllByText('RED');
-    expect(elements.length).toBeGreaterThan(0);
+    // PlayerChip が RED の色名を表示するので複数マッチする場合がある
+    expect(getAllByText(/RED/).length).toBeGreaterThan(0);
   });
 });
 
@@ -296,11 +283,18 @@ describe('WaitingRoom / waitQueue', () => {
         roomCode: 'Room Code',
         startGame: 'Start Game',
         copyRoomCode: 'Copy',
+        copyUrl: 'Copy URL',
+        copied: 'Copied',
         waitingTitle: 'Waiting',
         waitingDesc: 'desc',
         playersLabel: (n: number, m: number) => `${n}/${m}`,
+        playersInRoom: (n: number, m: number) => `${n}/${m}`,
+        aiSeats: (n: number) => `AI: ${n}`,
+        spectatorsLabel: (n: number) => `Spectators (${n})`,
         youAre: (c: string) => c,
         youLabel: 'you',
+        hostLabel: 'host',
+        starting: 'Starting...',
         waitingToJoin: 'Waiting to join',
         queuePos: (n: number) => `#${n}`,
         youreNext: "You're next",
@@ -311,9 +305,6 @@ describe('WaitingRoom / waitQueue', () => {
         scanQR: 'Scan QR',
         joiningRoom: 'Joining...',
         spectating: 'Spectating',
-        spectatorsLabel: (n: number) => `Spectators (${n})`,
-        hostLabel: 'host',
-        starting: 'Starting...',
       },
     });
   });
@@ -323,12 +314,11 @@ describe('WaitingRoom / waitQueue', () => {
   });
 
   it('waitQueue が空のとき観戦者セクションは表示されない', () => {
-    const session = makeSession({ waitQueue: [] });
+    mockPolledSession = makeSession({ waitQueue: [] });
     const { queryByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -337,12 +327,11 @@ describe('WaitingRoom / waitQueue', () => {
   });
 
   it('waitQueue に 1 人いるとき "#1" が表示される', () => {
-    const session = makeSession({ waitQueue: ['client-99'] });
+    mockPolledSession = makeSession({ waitQueue: ['client-99'] });
     const { getByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,
@@ -351,12 +340,11 @@ describe('WaitingRoom / waitQueue', () => {
   });
 
   it('自分が waitQueue にいるとき youLabel が表示される', () => {
-    const session = makeSession({ waitQueue: ['client-1'] });
+    mockPolledSession = makeSession({ waitQueue: ['client-1'] });
     const { getByText } = render(
       <WaitingRoom
         gameId="g1"
         clientId="client-1"
-        session={session}
         onGameStart={jest.fn()}
         onLeave={jest.fn()}
       />,

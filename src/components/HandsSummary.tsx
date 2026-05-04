@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   playerCell: {
+    flex: 1.4,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

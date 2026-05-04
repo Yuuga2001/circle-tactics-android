@@ -15,11 +15,12 @@ export default function HostRoute() {
 
   return (
     <HostScreen
+      gameId=""
       clientId={clientId}
-      onCreated={(gameId, roomCode) => {
+      onGameStart={(session) => {
         router.replace({
-          pathname: '/online/waiting',
-          params: { gameId, clientId, roomCode },
+          pathname: '/online/playing',
+          params: { gameId: session.gameId, clientId, session: JSON.stringify(session) },
         });
       }}
       onBack={() => router.back()}

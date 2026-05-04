@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MenuButton from '../../../src/components/MenuButton';
 
 const mockSetLang = jest.fn();
@@ -20,6 +21,8 @@ jest.mock('../../../src/i18n/index', () => ({
       confirmLeaveOnline: 'Leave the room and return to title?',
       cancel: 'Cancel',
       ok: 'OK',
+      clearLocalData: 'Clear Data',
+      confirmClearData: 'All data will be deleted. Are you sure?',
     },
     lang: 'en',
     isAuto: true,
@@ -28,6 +31,18 @@ jest.mock('../../../src/i18n/index', () => ({
   }),
   LANGUAGES: { en: 'English', ja: '日本語' },
   LangProvider: ({ children }: any) => children,
+}));
+
+const mockSetBgmMuted = jest.fn();
+const mockSetSeMuted = jest.fn();
+
+jest.mock('../../../src/hooks/useAudioSettings', () => ({
+  useAudioSettings: () => ({
+    bgmMuted: false,
+    seMuted: false,
+    setBgmMuted: mockSetBgmMuted,
+    setSeMuted: mockSetSeMuted,
+  }),
 }));
 
 describe('MenuButton', () => {
@@ -252,5 +267,51 @@ describe('MenuButton', () => {
     fireEvent.press(getByTestId('menu-fab-btn'));
     // mode=other では onNewGame ボタン（local 限定）は出ない
     expect(queryByText('New Game')).toBeNull();
+  });
+
+  describe('ローカルデータ削除', () => {
+    it('メニューを開くと「ローカルデータ削除」ボタンが表示される', () => {
+      const { getByTestId, getByText } = render(<MenuButton {...defaultProps} />);
+      fireEvent.press(getByTestId('menu-fab-btn'));
+      expect(getByText('Clear Data')).toBeTruthy();
+    });
+
+    it('「ローカルデータ削除」を押すと確認ダイアログが表示される', () => {
+      const { getByTestId, getByText } = render(<MenuButton {...defaultProps} />);
+      fireEvent.press(getByTestId('menu-fab-btn'));
+      fireEvent.press(getByText('Clear Data'));
+      expect(getByText('All data will be deleted. Are you sure?')).toBeTruthy();
+    });
+
+    it('確認後に AsyncStorage.clear が呼ばれる', async () => {
+      const { getByTestId, getByText } = render(<MenuButton {...defaultProps} />);
+      fireEvent.press(getByTestId('menu-fab-btn'));
+      fireEvent.press(getByText('Clear Data'));
+      await act(async () => {
+        fireEvent.press(getByText('OK'));
+      });
+      expect(AsyncStorage.clear).toHaveBeenCalledTimes(1);
+    });
+
+    it('確認後に BGM/SE がデフォルト（false）にリセットされる', async () => {
+      const { getByTestId, getByText } = render(<MenuButton {...defaultProps} />);
+      fireEvent.press(getByTestId('menu-fab-btn'));
+      fireEvent.press(getByText('Clear Data'));
+      await act(async () => {
+        fireEvent.press(getByText('OK'));
+      });
+      expect(mockSetBgmMuted).toHaveBeenCalledWith(false);
+      expect(mockSetSeMuted).toHaveBeenCalledWith(false);
+    });
+
+    it('確認後に言語設定がデバイス設定に戻る', async () => {
+      const { getByTestId, getByText } = render(<MenuButton {...defaultProps} />);
+      fireEvent.press(getByTestId('menu-fab-btn'));
+      fireEvent.press(getByText('Clear Data'));
+      await act(async () => {
+        fireEvent.press(getByText('OK'));
+      });
+      expect(mockSetAuto).toHaveBeenCalled();
+    });
   });
 });
