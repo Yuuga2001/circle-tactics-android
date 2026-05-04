@@ -91,7 +91,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                   isSelf={p.clientId === clientId}
                   selfLabel={t.youLabel}
                   isHost={p.clientId === session?.hostClientId}
-                  hostLabel={t.hostLabel}
+                  hostLabel={p.clientId === clientId ? t.hostLabel : t.hostOnlyLabel}
                 />
               ))}
             </View>

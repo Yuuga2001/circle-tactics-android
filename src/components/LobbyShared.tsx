@@ -138,7 +138,7 @@ export const PlayerChip: React.FC<PlayerChipProps> = ({ color, isSelf, selfLabel
         ]}
       />
       <Text style={chipStyles.label}>{color}</Text>
-      {isSelf && selfLabel && <Text style={chipStyles.selfLabel}>({selfLabel})</Text>}
+      {isSelf && !isHost && selfLabel && <Text style={chipStyles.selfLabel}>({selfLabel})</Text>}
       {isHost && hostLabel && <Text style={chipStyles.selfLabel}>({hostLabel})</Text>}
     </View>
   );
