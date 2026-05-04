@@ -236,6 +236,9 @@ const MenuButton: React.FC<MenuButtonProps> = ({ mode = 'other', onTitle, onNewG
                     message: t.confirmClearData,
                     onConfirm: async () => {
                       await AsyncStorage.clear().catch(() => {});
+                      setBgmMuted(false);
+                      setSeMuted(false);
+                      setAuto();
                       closePanel();
                     },
                   });
