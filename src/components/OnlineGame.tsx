@@ -262,19 +262,6 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     return cell[SIZES.indexOf(size)] === null && (onlineHandsRef.current[onlineCurrentPlayerRef.current]?.[size] ?? 0) > 0;
   };
 
-  const drag = useBoardDrag({
-    player: current.currentPlayer,
-    hand: current.hands[current.currentPlayer],
-    enabled: isMyTurn && phase === 'playing',
-    onSelectSize: handleSelectSize,
-    onPlace: handleCellClick,
-    boardLayout,
-    remeasureBoard: () => boardRemeasureRef.current?.(),
-    validCells,
-    onReject: () => { play('reject'); setRejectToastKey(k => k + 1); },
-    validateDrop,
-  });
-
   const handleRestart = async () => {
     try {
       const updated = await api.restart(gameId, clientId);
@@ -334,6 +321,19 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
     );
     return cells;
   }, [isMyTurn, phase, current.winner, current.board, current.hands, current.currentPlayer, selectedSize]);
+
+  const drag = useBoardDrag({
+    player: current.currentPlayer,
+    hand: current.hands[current.currentPlayer],
+    enabled: isMyTurn && phase === 'playing',
+    onSelectSize: handleSelectSize,
+    onPlace: handleCellClick,
+    boardLayout,
+    remeasureBoard: () => boardRemeasureRef.current?.(),
+    validCells,
+    onReject: () => { play('reject'); setRejectToastKey(k => k + 1); },
+    validateDrop,
+  });
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -397,11 +397,15 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
       ? t.pickingFirst
       : phase === 'announcing'
         ? t.goesFirst(playerLabel(current.currentPlayer))
-        : !humanPlayers.includes(current.currentPlayer)
-          ? t.aiThinking(current.currentPlayer)
-          : isMyTurn
-            ? t.turnYou
-            : t.turnPlayer(current.currentPlayer);
+        : isMyTurn
+          ? t.turnYou
+          : t.turnPlayer(current.currentPlayer);
+
+  const turnTextColor: string =
+    current.winner && (current.winner as string) !== 'DRAW'
+      ? PLAYER_BORDER_COLORS[current.winner as PlayerKey]
+      : (phase === 'rouletting' || phase === 'announcing') ? COLORS.boardFrame
+      : PLAYER_BORDER_COLORS[current.currentPlayer];
 
   const victoryOverlay: PlayerKey | null =
     current.winner && (current.winner as string) !== 'DRAW' ? (current.winner as PlayerKey) : null;
@@ -461,7 +465,7 @@ const OnlineGame: React.FC<OnlineGameProps> = ({ gameId, clientId, initialSessio
           ) : (
             <View style={styles.statusLine}>
               <View style={styles.turnRow}>
-                <Text style={styles.turnText}>{turnText}</Text>
+                <Text style={[styles.turnText, { color: turnTextColor }]}>{turnText}</Text>
                 {turnSecondsLeft !== null && (
                   <TimerBadge seconds={turnSecondsLeft} isOwn={isMyTurn} />
                 )}

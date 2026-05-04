@@ -7,7 +7,7 @@ import { useLang } from '../i18n';
 import BoardComponent from './Board';
 import HandsSummary from './HandsSummary';
 import ScreenContainer from './ui/ScreenContainer';
-import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SHADOWS } from '../styles/theme';
+import { COLORS, FONT_FAMILY, FONT_SIZE, PLAYER_BORDER_COLORS, RADIUS, SHADOWS } from '../styles/theme';
 
 interface SpectatorViewProps {
   gameId: string;
@@ -105,10 +105,12 @@ const SpectatorView: React.FC<SpectatorViewProps> = ({
                   {t.playerWins(`${t.playerLabel} ${session.winner}`)}
                 </Text>
               ) : (
-                <Text style={styles.statusText}>
-                  {players.find((p) => p.color === session.currentPlayer)?.isHuman
-                    ? t.turnPlayer(session.currentPlayer)
-                    : t.aiThinking(session.currentPlayer)}
+                <Text style={[styles.statusText, {
+                  color: session.winner
+                    ? PLAYER_BORDER_COLORS[session.winner as keyof typeof PLAYER_BORDER_COLORS]
+                    : PLAYER_BORDER_COLORS[session.currentPlayer as keyof typeof PLAYER_BORDER_COLORS] ?? COLORS.boardFrame
+                }]}>
+                  {t.turnPlayer(session.currentPlayer)}
                 </Text>
               )}
             </View>

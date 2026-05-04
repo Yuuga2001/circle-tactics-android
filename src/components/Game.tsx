@@ -18,6 +18,7 @@ import {
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
+  PLAYER_BORDER_COLORS,
   PlayerKey,
 } from '../styles/theme';
 
@@ -239,11 +240,15 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
           ? t.pickingFirst
           : phase === 'announcing'
             ? t.goesFirst(playerLabel(currentPlayer))
-            : isAITurn
-              ? t.aiThinking(currentPlayer)
-              : isCurrentHuman && humanPlayers.length === 1
-                ? t.turnYou
-                : t.turnPlayer(currentPlayer);
+            : isCurrentHuman && humanPlayers.length === 1
+              ? t.turnYou
+              : t.turnPlayer(currentPlayer);
+
+  const turnTextColor: string =
+    winner === 'DRAW' ? COLORS.boardFrame :
+    winner ? PLAYER_BORDER_COLORS[winner as PlayerKey] :
+    (phase === 'rouletting' || phase === 'announcing') ? COLORS.boardFrame :
+    PLAYER_BORDER_COLORS[currentPlayer];
 
   const summaryHighlight = phase === 'playing' ? currentPlayer : rouletteHighlight;
   const displayedPlayer = summaryHighlight;
@@ -314,7 +319,7 @@ const GameComponent: React.FC<GameProps> = ({ state, dispatch, restartRef }) => 
               )}
             </View>
           ) : (
-            <Text testID="turn-text" style={styles.turnText}>
+            <Text testID="turn-text" style={[styles.turnText, { color: turnTextColor }]}>
               {turnText}
             </Text>
           )}
