@@ -14,16 +14,16 @@ import {
 export const lobbyStyles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingTop: 56,
+    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 32,
     alignItems: 'center',
-    gap: 24,
+    gap: 10,
   },
   header: { alignItems: 'center' },
   title: {
     fontFamily: FONT_FAMILY.bold,
-    fontSize: 26,
+    fontSize: 20,
     color: COLORS.boardFrame,
     letterSpacing: 1,
   },

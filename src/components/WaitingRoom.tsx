@@ -95,52 +95,49 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
       <View testID="waiting-room" style={lobbyStyles.container}>
         <View style={lobbyStyles.header}>
           <Text style={lobbyStyles.title}>{t.waitingTitle}</Text>
-          <Text style={lobbyStyles.subtitle}>{t.waitingDesc}</Text>
         </View>
 
-        {/* Room code + copy */}
+        {/* Room code + QR side by side */}
         <View style={lobbyStyles.section}>
-          <View style={codeStyles.wrap}>
-            <Text style={codeStyles.label}>{t.roomCode}</Text>
-            {displayCode ? (
-              <>
-                <Text testID="room-code-text" style={codeStyles.value}>{displayCode}</Text>
+          <View style={styles.codeQrRow}>
+            {/* Left: code + copy */}
+            <View style={styles.codeLeft}>
+              <Text style={codeStyles.label}>{t.roomCode}</Text>
+              {displayCode ? (
+                <>
+                  <Text testID="room-code-text" style={[codeStyles.value, styles.codeValueCompact]}>{displayCode}</Text>
+                  <Pressable
+                    testID="copy-code-btn"
+                    onPress={copyCode}
+                    style={[codeStyles.copyBtn, copied ? codeStyles.copyBtnCopied : null]}
+                  >
+                    <Text style={[codeStyles.copyBtnLabel, copied ? codeStyles.copyBtnLabelCopied : null]}>
+                      {copied ? t.copied : t.copyRoomCode}
+                    </Text>
+                  </Pressable>
+                </>
+              ) : (
+                <ActivityIndicator color={COLORS.boardFrame} style={{ marginTop: 8 }} />
+              )}
+            </View>
+            {/* Right: QR + URL copy */}
+            {!!shareUrl && (
+              <View style={styles.qrRight}>
+                <View style={styles.qrBox}>
+                  <QRCode value={shareUrl} size={110} backgroundColor="#fff" />
+                </View>
                 <Pressable
-                  testID="copy-code-btn"
-                  onPress={copyCode}
-                  style={[codeStyles.copyBtn, copied ? codeStyles.copyBtnCopied : null]}
+                  testID="copy-url-btn"
+                  onPress={copyUrl}
+                  style={[codeStyles.copyBtn, copiedUrl ? codeStyles.copyBtnCopied : null]}
                 >
-                  <Text style={[codeStyles.copyBtnLabel, copied ? codeStyles.copyBtnLabelCopied : null]}>
-                    {copied ? t.copied : t.copyRoomCode}
+                  <Text style={[codeStyles.copyBtnLabel, copiedUrl ? codeStyles.copyBtnLabelCopied : null]}>
+                    {copiedUrl ? t.copied : t.copyUrl}
                   </Text>
                 </Pressable>
-              </>
-            ) : (
-              <ActivityIndicator color={COLORS.boardFrame} style={{ marginTop: 8 }} />
+              </View>
             )}
           </View>
-
-          {/* QR code + URL copy */}
-          {!!shareUrl && (
-            <View style={styles.qrWrap}>
-              <View style={styles.qrBox}>
-                <QRCode
-                  value={shareUrl}
-                  size={180}
-                  backgroundColor="#fff"
-                />
-              </View>
-              <Pressable
-                testID="copy-url-btn"
-                onPress={copyUrl}
-                style={[codeStyles.copyBtn, copiedUrl ? codeStyles.copyBtnCopied : null, styles.copyUrlBtn]}
-              >
-                <Text style={[codeStyles.copyBtnLabel, copiedUrl ? codeStyles.copyBtnLabelCopied : null]}>
-                  {copiedUrl ? t.copied : t.copyUrl}
-                </Text>
-              </Pressable>
-            </View>
-          )}
         </View>
 
         {/* Player list */}
@@ -208,20 +205,33 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
 };
 
 const styles = StyleSheet.create({
-  qrWrap: {
+  codeQrRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
     gap: 10,
   },
-  copyUrlBtn: {
-    marginTop: 2,
+  codeLeft: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  codeValueCompact: {
+    fontSize: 26,
+    letterSpacing: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  qrRight: {
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 0,
   },
   qrBox: {
     backgroundColor: '#fff',
-    padding: 6,
-    borderWidth: 3,
+    padding: 4,
+    borderWidth: 2,
     borderColor: COLORS.boardFrame,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   sectionTitle: {
     fontFamily: FONT_FAMILY.bold,
