@@ -2,7 +2,7 @@
   "expo": {
     "name": "CircleTactics",
     "slug": "circle-tactics-android",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,7 @@
         "backgroundColor": "#f3e9d8"
       },
       "package": "jp.riverapp.circletactics",
-      "versionCode": 4,
+      "versionCode": 5,
       "edgeToEdgeEnabled": true,
       "intentFilters": [
         {
