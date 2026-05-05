@@ -207,7 +207,6 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onPlayLocal, onPlayOnline }) 
 
         {isSoloMode && (
           <View style={styles.soloSection}>
-            <Text style={styles.soloDesc}>{t.soloPlayDesc}</Text>
             <Pressable
               onPress={() => setShowSoloRecords(true)}
               style={({ pressed }) => [styles.soloBtn, pressed && styles.soloBtnPressed]}
