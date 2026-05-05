@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import HostScreen from '../../src/components/HostScreen';
+import WaitingRoom from '../../src/components/WaitingRoom';
 import { getClientId } from '../../src/online/clientId';
 
 export default function HostRoute() {
@@ -14,7 +14,7 @@ export default function HostRoute() {
   if (clientId === null) return null;
 
   return (
-    <HostScreen
+    <WaitingRoom
       gameId=""
       clientId={clientId}
       onGameStart={(session) => {
@@ -23,7 +23,7 @@ export default function HostRoute() {
           params: { gameId: session.gameId, clientId, session: JSON.stringify(session) },
         });
       }}
-      onBack={() => router.back()}
+      onLeave={() => router.back()}
     />
   );
 }

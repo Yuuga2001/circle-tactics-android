@@ -14,7 +14,7 @@ import {
 export const lobbyStyles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingTop: 16,
+    paddingTop: 72,
     paddingHorizontal: 16,
     paddingBottom: 32,
     alignItems: 'center',
