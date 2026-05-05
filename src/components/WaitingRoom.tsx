@@ -220,12 +220,12 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         )}
 
         <View style={lobbyStyles.actions}>
-          {isPlayer && (
+          {!!gameId && (
             <Button
               title={starting ? t.starting : t.startGame}
               variant="play"
               fullWidth
-              disabled={!gameId || starting}
+              disabled={!displayCode || starting}
               onPress={handleStart}
               testID="start-btn"
             />
