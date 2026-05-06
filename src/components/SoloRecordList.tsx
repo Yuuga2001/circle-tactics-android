@@ -28,6 +28,10 @@ const SoloRecordList: React.FC<SoloRecordListProps> = ({ visible, onClose }) => 
   const winCount = records.filter((r) => r.isWin).length;
   const total = records.length;
   const winRateText = total === 0 ? '- %' : `${Math.round((winCount / total) * 100)}%`;
+  const maxWinStreak = records.reduce((acc, r) => {
+    if (r.isWin) { acc.cur++; acc.best = Math.max(acc.best, acc.cur); } else { acc.cur = 0; }
+    return acc;
+  }, { best: 0, cur: 0 }).best;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -47,10 +51,17 @@ const SoloRecordList: React.FC<SoloRecordListProps> = ({ visible, onClose }) => 
         ) : (
           <>
             {/* 勝率サマリー */}
-            <View style={styles.summary}>
-              <Text style={styles.winRateLabel}>{t.winRate}</Text>
-              <Text style={styles.winRateValue}>{winRateText}</Text>
-              <Text style={styles.winRateCount}>{winCount} / {total}</Text>
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryCol}>
+                <Text style={styles.winRateLabel}>{t.winRate}</Text>
+                <Text style={styles.winRateValue}>{winRateText}</Text>
+                <Text style={styles.winRateCount}>{winCount} / {total}</Text>
+              </View>
+              <View style={styles.summaryCol}>
+                <Text style={styles.winRateLabel}>{t.maxWinStreak}</Text>
+                <Text style={styles.winRateValue}>{maxWinStreak}</Text>
+                <Text style={styles.winRateCount}> </Text>
+              </View>
             </View>
 
             <View style={styles.divider} />
@@ -113,10 +124,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.body,
     color: COLORS.textMuted,
   },
-  summary: {
-    alignItems: 'center',
+  summaryRow: {
+    flexDirection: 'row',
     paddingVertical: 20,
     backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+  summaryCol: {
+    flex: 1,
+    alignItems: 'center',
   },
   winRateLabel: {
     fontFamily: FONT_FAMILY.bold,
